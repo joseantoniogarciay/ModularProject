@@ -6,6 +6,7 @@ extension Settings {
             "SWIFT_VERSION": "6.0",
             "SWIFT_STRICT_CONCURRENCY": "complete",
             "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+            "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "",
         ]
     )
 }
@@ -13,7 +14,8 @@ extension Settings {
 public extension Project {
     static func framework(
         name: String,
-        dependencies: [TargetDependency] = []
+        dependencies: [TargetDependency] = [],
+        resources: ResourceFileElements? = nil
     ) -> Project {
         Project(
             name: name,
@@ -26,6 +28,7 @@ public extension Project {
                     bundleId: "com.modular.app.\(name.lowercased())",
                     deploymentTargets: .iOS("16.0"),
                     sources: ["Sources/**"],
+                    resources: resources,
                     dependencies: dependencies,
                     settings: Settings.modular
                 )

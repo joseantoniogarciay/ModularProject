@@ -6,13 +6,12 @@
 
 ## Stack & non-negotiable rules
 
-- **UI**: UIKit. No SwiftUI.
+- **UI**: UIKit, programmatic. No SwiftUI. No XIBs or storyboards unless the user explicitly asks for them.
 - **Persistence**: no CoreData. If persistence is needed, propose an alternative before implementing.
 - **Language**: Swift 6 (`SWIFT_VERSION = 6.0`).
 - **Concurrency**:
   - `SWIFT_STRICT_CONCURRENCY = complete` (full data-race safety).
   - `SWIFT_APPROACHABLE_CONCURRENCY = YES` (Approachable Concurrency from Xcode 26).
-  - Apply the `swift-concurrency` skill (`.claude/skills/swift-concurrency/`) on any change that touches tasks, actors, `@MainActor`, `Sendable`, async/await, or concurrency diagnostics.
 - **iOS deployment target**: 16.0.
 - **Build system**: Tuist 4 (workspace is generated). Do not edit `.xcodeproj` files by hand: change `Project.swift` / helpers and regenerate with `tuist generate`.
 - **Tuist version is pinned** in `.mise.toml`. Anyone cloning with `mise` installed gets the right version automatically. Without `mise`, use the version declared in that file.
@@ -28,7 +27,7 @@ ModularProject/
 ├── Tuist/
 │   └── ProjectDescriptionHelpers/Module.swift   # Project.framework helper + Settings.modular
 ├── Workspace.swift
-└── .claude/skills/   # Local Claude Code skills (swift-concurrency).
+└── .claude/skills/   # Local Claude Code skills.
 ```
 
 ### Dependency rules

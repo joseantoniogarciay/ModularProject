@@ -12,7 +12,10 @@ let project = Project(
             bundleId: "com.modular.app",
             deploymentTargets: .iOS("16.0"),
             infoPlist: .extendingDefault(with: [
-                "UILaunchStoryboardName": "LaunchScreen",
+                "UILaunchScreen": [
+                    "UIColorName": "Background",
+                    "UIImageName": "Logo",
+                ],
                 "UIApplicationSceneManifest": [
                     "UIApplicationSupportsMultipleScenes": false,
                     "UISceneConfigurations": [
