@@ -1,6 +1,7 @@
 import UIKit
 #if DEV
 import Core
+import Pulse
 #endif
 
 @main
@@ -11,6 +12,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         #if DEV
         LogCenter.backend = OSLogBackend()
+        LogCenter.storage = PulseLogStorage()
+        URLSessionProxyDelegate.enableAutomaticRegistration()
         #endif
         return true
     }

@@ -22,11 +22,16 @@ private func infoPlist(displayName: String) -> [String: Plist.Value] {
     ]
 }
 
-private let appDependencies: [TargetDependency] = [
+private let baseAppDependencies: [TargetDependency] = [
     .project(target: "Core", path: "../Core"),
     .project(target: "Networking", path: "../Networking"),
     .project(target: "Data", path: "../Data"),
     .project(target: "Pokemon", path: "../Features/Pokemon"),
+]
+
+private let devAppDependencies: [TargetDependency] = baseAppDependencies + [
+    .external(name: "Pulse"),
+    .external(name: "PulseUI"),
 ]
 
 let project = Project(
@@ -43,7 +48,7 @@ let project = Project(
             resources: ["Resources/**"],
             buildableFolders: ["Sources"],
             scripts: [.swiftLint],
-            dependencies: appDependencies,
+            dependencies: baseAppDependencies,
             settings: Settings.modular
         ),
         .target(
@@ -56,7 +61,7 @@ let project = Project(
             resources: ["Resources/**"],
             buildableFolders: ["Sources"],
             scripts: [.swiftLint],
-            dependencies: appDependencies,
+            dependencies: devAppDependencies,
             settings: Settings.modular(addingConditions: "DEV")
         ),
     ]
