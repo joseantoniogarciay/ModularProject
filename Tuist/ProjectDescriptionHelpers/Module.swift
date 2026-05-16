@@ -15,8 +15,12 @@ extension Settings {
 public extension TargetScript {
     static let swiftLint: TargetScript = .pre(
         script: """
-        SWIFTLINT="${SRCROOT}/../Tuist/.build/artifacts/swiftlint/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint"
-        CONFIG="${SRCROOT}/../.swiftlint.yml"
+        PROJECT_ROOT="${SRCROOT}"
+        while [ ! -d "${PROJECT_ROOT}/Tuist" ] && [ "${PROJECT_ROOT}" != "/" ]; do
+            PROJECT_ROOT="$(dirname "${PROJECT_ROOT}")"
+        done
+        SWIFTLINT="${PROJECT_ROOT}/Tuist/.build/artifacts/swiftlint/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint"
+        CONFIG="${PROJECT_ROOT}/.swiftlint.yml"
         if [ -f "$SWIFTLINT" ]; then
             "$SWIFTLINT" lint --quiet --config "$CONFIG" "${SRCROOT}/Sources"
         else
