@@ -1,10 +1,9 @@
 import Alamofire
+import Core
 import Foundation
-import OSLog
 
 final class NetEventMonitor: EventMonitor, Sendable {
     let queue = DispatchQueue(label: "net.alamofire.logger")
-    private let logger = Logger(subsystem: "com.modular.app.networking", category: "net")
     private let sessionHeaders: HTTPHeaders?
     private let additionalHeaders: [String: String]?
 
@@ -22,21 +21,24 @@ final class NetEventMonitor: EventMonitor, Sendable {
     }
 
     private func log<Value>(_ result: Result<Value, AFError>, debugDescription: String) {
+        let format: LogFormat
+        let includeAdditionalHeaders: Bool
         switch result {
         case .success:
-            if let sessionHeaders {
-                logger.info("\(self.description(for: sessionHeaders), privacy: .public)")
-            }
-            if let additionalHeaders {
-                logger.info("\(self.description(for: additionalHeaders), privacy: .public)")
-            }
-            logger.info("\(debugDescription, privacy: .public)")
+            format = .info
+            includeAdditionalHeaders = true
         case .failure:
-            if let sessionHeaders {
-                logger.error("\(self.description(for: sessionHeaders), privacy: .public)")
-            }
-            logger.error("\(debugDescription, privacy: .public)")
+            format = .error
+            includeAdditionalHeaders = false
         }
+
+        if let sessionHeaders {
+            logMessage(description(for: sessionHeaders), category: .net, format: format)
+        }
+        if includeAdditionalHeaders, let additionalHeaders {
+            logMessage(description(for: additionalHeaders), category: .net, format: format)
+        }
+        logMessage(debugDescription, category: .net, format: format)
     }
 
     private func description(for headers: HTTPHeaders) -> String {
