@@ -5,7 +5,9 @@ import PackageDescription
     import struct ProjectDescription.PackageSettings
 
     let packageSettings = PackageSettings(
-        productTypes: [:]
+        productTypes: [
+            "Alamofire": .staticFramework,
+        ]
     )
 #endif
 

@@ -41,7 +41,7 @@ public extension Project {
                 .target(
                     name: name,
                     destinations: .iOS,
-                    product: .framework,
+                    product: .staticFramework,
                     bundleId: "com.modular.app.\(name.lowercased())",
                     deploymentTargets: .iOS("16.0"),
                     sources: ["Sources/**"],
