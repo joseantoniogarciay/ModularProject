@@ -3,7 +3,6 @@ import Foundation
 public enum LogCategory: String, Sendable {
     case net
     case viewCycle
-    case statistics
     case breadcrumbs
 }
 

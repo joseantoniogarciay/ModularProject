@@ -8,7 +8,6 @@ extension Logger {
 
     static let net = Logger(subsystem: subsystem, category: "net")
     static let viewCycle = Logger(subsystem: subsystem, category: "viewCycle")
-    static let statistics = Logger(subsystem: subsystem, category: "statistics")
     static let breadcrumbs = Logger(subsystem: subsystem, category: "breadcrumbs")
 }
 
@@ -18,7 +17,6 @@ struct OSLogAppLogger: AppLogger {
         switch category {
         case .net: logger = .net
         case .viewCycle: logger = .viewCycle
-        case .statistics: logger = .statistics
         case .breadcrumbs: logger = .breadcrumbs
         }
         switch format {
