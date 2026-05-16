@@ -64,3 +64,4 @@ xcodebuild -workspace ModularProject.xcworkspace -scheme App \
 - `@MainActor` only when the type is genuinely UI-bound. Justify in review.
 - Prefer `actor` for shared mutable state over locks/queues.
 - Do not use `@unchecked Sendable` or `nonisolated(unsafe)` without a documented invariant and a removal plan.
+- Asset access: always use the Tuist-synthesized accessor (`CoreAsset.background.color`, `CoreAsset.logo.image`, etc.), never `UIColor(named:)`, `UIColor(resource:)` or any other stringly-typed/Xcode-generated alternative. Xcode auto-emits its own `ColorResource` / `ImageResource` symbols in DerivedData but they are `internal` to the module and not usable across modules — Tuist's accessor is the only public, cross-module-safe path.
