@@ -12,22 +12,17 @@ public enum LogFormat: Sendable {
     case error
 }
 
-public protocol LogBackend: Sendable {
+public protocol AppLogger: Sendable {
     func log(_ message: String, category: LogCategory, format: LogFormat)
-}
-
-public protocol LogStorage: Sendable {
-    func store(category: LogCategory, format: LogFormat, message: String)
 }
 
 public enum LogCenter {
     // Invariant: written once during App bootstrap (on the main thread, before any
-    // background thread can read it). After bootstrap the values are effectively
+    // background thread can read it). After bootstrap the value is effectively
     // immutable, so unsynchronized reads from logMessage are safe.
     // Removal plan: switch to `Atomic` from the Synchronization module when the
     // deployment target reaches iOS 18.
-    nonisolated(unsafe) public static var backend: (any LogBackend)?
-    nonisolated(unsafe) public static var storage: (any LogStorage)?
+    nonisolated(unsafe) public static var loggers: [any AppLogger] = []
 }
 
 public func logMessage(
@@ -35,8 +30,7 @@ public func logMessage(
     category: LogCategory,
     format: LogFormat = .info
 ) {
-    LogCenter.backend?.log(message, category: category, format: format)
-    if category != .net {
-        LogCenter.storage?.store(category: category, format: format, message: message)
+    for logger in LogCenter.loggers {
+        logger.log(message, category: category, format: format)
     }
 }

@@ -12,7 +12,7 @@ extension Logger {
     static let breadcrumbs = Logger(subsystem: subsystem, category: "breadcrumbs")
 }
 
-struct OSLogBackend: LogBackend {
+struct OSLogAppLogger: AppLogger {
     func log(_ message: String, category: LogCategory, format: LogFormat) {
         let logger: Logger
         switch category {

@@ -11,8 +11,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         #if DEV
-        LogCenter.backend = OSLogBackend()
-        LogCenter.storage = PulseLogStorage()
+        LogCenter.loggers = [OSLogAppLogger(), PulseAppLogger()]
         URLSessionProxyDelegate.enableAutomaticRegistration()
         #endif
         return true
