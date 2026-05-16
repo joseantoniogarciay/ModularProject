@@ -6,6 +6,7 @@ let workspace = Workspace(
         "App",
         "Core",
         "Networking",
+        "Data",
         "Features/**",
     ]
 )

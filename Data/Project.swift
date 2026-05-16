@@ -2,9 +2,9 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 
 let project = Project.framework(
-    name: "Networking",
+    name: "Data",
     dependencies: [
         .project(target: "Core", path: "../Core"),
-        .external(name: "Alamofire"),
+        .project(target: "Networking", path: "../Networking"),
     ]
 )

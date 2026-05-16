@@ -2,6 +2,7 @@ included:
   - App/Sources
   - Core/Sources
   - Networking/Sources
+  - Data/Sources
   - Features
 
 excluded:

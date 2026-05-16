@@ -3,10 +3,10 @@ import Networking
 import UIKit
 
 final class RootViewController: UIViewController {
-    private let api: any APIClient
+    private let netClient: any NetClient
 
-    init(api: any APIClient = URLSessionAPIClient(baseURL: URL(string: "https://example.com")!)) {
-        self.api = api
+    init(netClient: any NetClient = AlamofireNetClient(userAgent: RootViewController.defaultUserAgent())) {
+        self.netClient = netClient
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -19,5 +19,16 @@ final class RootViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "ModularProject"
+    }
+
+    private static func defaultUserAgent() -> String {
+        let osVersion = UIDevice.current.systemVersion
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        #if DEBUG
+        let flavour = "debug"
+        #else
+        let flavour = "release"
+        #endif
+        return "iOS/\(osVersion) modular \(appVersion) (\(flavour))"
     }
 }

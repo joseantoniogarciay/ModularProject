@@ -13,5 +13,6 @@ let package = Package(
     name: "ModularProject",
     dependencies: [
         .package(url: "https://github.com/realm/SwiftLint", from: "0.57.0"),
+        .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.10.0"),
     ]
 )
