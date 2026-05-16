@@ -1,62 +1,67 @@
 # ModularProject
 
-## Stack & reglas no negociables
+## Documentation language
+
+**All content in this file must be written in English only.** Any note, rule, or section added later must be in English, regardless of the language the conversation is happening in. Translate before writing.
+
+## Stack & non-negotiable rules
 
 - **UI**: UIKit. No SwiftUI.
-- **Persistencia**: sin CoreData. Si se necesita persistencia, proponer alternativa antes de implementar.
-- **Lenguaje**: Swift 6 (`SWIFT_VERSION = 6.0`).
-- **Concurrencia**:
-  - `SWIFT_STRICT_CONCURRENCY = complete` (data-race safety completo).
-  - `SWIFT_APPROACHABLE_CONCURRENCY = YES` (Approachable Concurrency de Xcode 26).
-  - Aplicar la skill `swift-concurrency` (`.claude/skills/swift-concurrency/`) en cualquier cambio que toque tareas, actors, `@MainActor`, `Sendable`, async/await o diagnósticos de concurrencia.
+- **Persistence**: no CoreData. If persistence is needed, propose an alternative before implementing.
+- **Language**: Swift 6 (`SWIFT_VERSION = 6.0`).
+- **Concurrency**:
+  - `SWIFT_STRICT_CONCURRENCY = complete` (full data-race safety).
+  - `SWIFT_APPROACHABLE_CONCURRENCY = YES` (Approachable Concurrency from Xcode 26).
+  - Apply the `swift-concurrency` skill (`.claude/skills/swift-concurrency/`) on any change that touches tasks, actors, `@MainActor`, `Sendable`, async/await, or concurrency diagnostics.
 - **iOS deployment target**: 16.0.
-- **Build system**: Tuist 4 (workspace generado). No editar `.xcodeproj` a mano: cambiar `Project.swift` / helpers y regenerar con `tuist generate`.
+- **Build system**: Tuist 4 (workspace is generated). Do not edit `.xcodeproj` files by hand: change `Project.swift` / helpers and regenerate with `tuist generate`.
+- **Tuist version is pinned** in `.mise.toml`. Anyone cloning with `mise` installed gets the right version automatically. Without `mise`, use the version declared in that file.
 
-## Arquitectura modular
+## Modular architecture
 
 ```
 ModularProject/
-├── App/              # Target app (UIKit). Composition root: cablea DI.
-├── Core/             # Framework. Contratos (protocols) + modelos Sendable + utilidades puras.
-├── Networking/       # Framework. Implementa APIClient (de Core) con URLSession.
-├── Features/         # Una carpeta por feature. Cada feature es su propio Project.swift.
+├── App/              # App target (UIKit). Composition root: wires DI.
+├── Core/             # Framework. Contracts (protocols) + Sendable models + pure utilities.
+├── Networking/       # Framework. Implements APIClient (from Core) with URLSession.
+├── Features/         # One folder per feature. Each feature owns its Project.swift.
 ├── Tuist/
-│   └── ProjectDescriptionHelpers/Module.swift   # Helper Project.framework + Settings.modular
+│   └── ProjectDescriptionHelpers/Module.swift   # Project.framework helper + Settings.modular
 ├── Workspace.swift
-└── .claude/skills/   # Skills locales para Claude Code (swift-concurrency).
+└── .claude/skills/   # Local Claude Code skills (swift-concurrency).
 ```
 
-### Reglas de dependencias
+### Dependency rules
 
-- **Core**: no depende de nadie. No importa UIKit ni Networking.
-- **Networking**: depende solo de `Core`.
-- **Features/<X>**: depende solo de `Core`. **Nunca** depende de `Networking` ni de otra Feature.
-- **App**: depende de todo. Es el único lugar donde se instancian implementaciones concretas (DI).
+- **Core**: depends on nothing. Does not import UIKit or Networking.
+- **Networking**: depends only on `Core`.
+- **Features/<X>**: depends only on `Core`. **Never** depends on `Networking` or another Feature.
+- **App**: depends on everything. The only place where concrete implementations are instantiated (DI).
 
-### Cómo añadir una Feature
+### How to add a Feature
 
-1. Crear `Features/<Nombre>/Project.swift` con `Project.framework(name: "<Nombre>", dependencies: [.project(target: "Core", path: "../../Core")])`.
-2. Crear `Features/<Nombre>/Sources/`.
-3. `tuist generate`.
+1. Create `Features/<Name>/Project.swift` with `Project.framework(name: "<Name>", dependencies: [.project(target: "Core", path: "../../Core")])`.
+2. Create `Features/<Name>/Sources/`.
+3. Run `tuist generate`.
 
-### Cómo añadir un contrato
+### How to add a contract
 
-Va en `Core/Sources/` como `protocol X: Sendable`. La implementación vive en el módulo correspondiente (Networking, Persistence, etc.). El cableado se hace en `App`.
+It goes in `Core/Sources/` as `protocol X: Sendable`. The implementation lives in the relevant module (Networking, Persistence, etc.). Wiring happens in `App`.
 
-## Comandos habituales
+## Common commands
 
 ```bash
-tuist generate                # regenera workspace
-tuist generate --no-open      # sin abrir Xcode
-tuist clean                   # limpia caché de generación
+tuist generate                # regenerate workspace
+tuist generate --no-open      # without opening Xcode
+tuist clean                   # clear generation cache
 xcodebuild -workspace ModularProject.xcworkspace -scheme App \
   -destination 'generic/platform=iOS Simulator' build
 ```
 
-## Convenciones de código
+## Code conventions
 
-- Mensajes de commit en inglés.
-- Tipos públicos cruzando módulos: `Sendable` siempre que sea posible.
-- `@MainActor` solo cuando el tipo es genuinamente UI-bound. Justificar en review.
-- Preferir `actor` para estado mutable compartido sobre locks/queues.
-- No usar `@unchecked Sendable` ni `nonisolated(unsafe)` sin invariante documentado y plan de retirada.
+- Commit messages in English.
+- Public types crossing module boundaries: `Sendable` whenever possible.
+- `@MainActor` only when the type is genuinely UI-bound. Justify in review.
+- Prefer `actor` for shared mutable state over locks/queues.
+- Do not use `@unchecked Sendable` or `nonisolated(unsafe)` without a documented invariant and a removal plan.
