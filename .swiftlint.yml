@@ -3,6 +3,7 @@ included:
   - Core/Sources
   - Networking/Sources
   - Data/Sources
+  - SharedUI/Sources
   - Features
 
 excluded:

@@ -7,6 +7,7 @@ import PackageDescription
     let packageSettings = PackageSettings(
         productTypes: [
             "Alamofire": .staticFramework,
+            "Kingfisher": .staticFramework,
         ]
     )
 #endif
@@ -16,5 +17,6 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/realm/SwiftLint", from: "0.57.0"),
         .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.10.0"),
+        .package(url: "https://github.com/onevcat/Kingfisher.git", from: "8.0.0"),
     ]
 )

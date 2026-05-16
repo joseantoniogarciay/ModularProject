@@ -1,3 +1,4 @@
+import Pokemon
 import UIKit
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -10,7 +11,16 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = RootViewController()
+
+        let dependencies = AppDependencies.live()
+        let listVC = PokemonListViewController(
+            listUseCase: dependencies.makeListPokemonUseCase(),
+            onSelect: { _ in
+                // Detail navigation lands in a follow-up commit.
+            }
+        )
+        window.rootViewController = UINavigationController(rootViewController: listVC)
+
         self.window = window
         window.makeKeyAndVisible()
     }

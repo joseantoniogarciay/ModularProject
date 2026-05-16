@@ -7,6 +7,7 @@ let workspace = Workspace(
         "Core",
         "Networking",
         "Data",
+        "SharedUI",
         "Features/**",
     ]
 )

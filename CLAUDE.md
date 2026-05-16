@@ -36,7 +36,9 @@ ModularProject/
 
 - **Core**: depends on nothing. Does not import UIKit or Networking.
 - **Networking**: depends only on `Core`.
-- **Features/<X>**: depends only on `Core`. **Never** depends on `Networking` or another Feature.
+- **Data**: depends on `Core` and `Networking`. Holds DTOs and repository implementations.
+- **SharedUI**: depends on nothing (UIKit only). Reusable UIKit components consumed by Features.
+- **Features/<X>**: depends only on `Core` and `SharedUI`. **Never** depends on `Networking`, `Data`, or another Feature.
 - **App**: depends on everything. The only place where concrete implementations are instantiated (DI).
 
 ### How to add a Feature

@@ -34,6 +34,8 @@ let project = Project(
             dependencies: [
                 .project(target: "Core", path: "../Core"),
                 .project(target: "Networking", path: "../Networking"),
+                .project(target: "Data", path: "../Data"),
+                .project(target: "Pokemon", path: "../Features/Pokemon"),
             ],
             settings: Settings.modular
         ),
