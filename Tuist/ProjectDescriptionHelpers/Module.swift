@@ -7,6 +7,7 @@ extension Settings {
             "SWIFT_STRICT_CONCURRENCY": "complete",
             "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
             "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "",
+            "DEVELOPMENT_REGION": "en",
         ]
     )
 }
