@@ -15,6 +15,7 @@
 - **iOS deployment target**: 16.0.
 - **Build system**: Tuist 4 (workspace is generated). Do not edit `.xcodeproj` files by hand: change `Project.swift` / helpers and regenerate with `tuist generate`.
 - **Tuist version is pinned** in `.mise.toml`. Anyone cloning with `mise` installed gets the right version automatically. Without `mise`, use the version declared in that file.
+- **Lint**: SwiftLint, fetched via SPM (`Tuist/Package.swift`). Run `tuist install` after cloning so the binary is available at `Tuist/.build/artifacts/swiftlint/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint`. Every target has a pre-build Run Script that lints its `Sources/`. Rules live in `.swiftlint.yml` at repo root.
 
 ## Modular architecture
 

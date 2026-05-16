@@ -12,6 +12,22 @@ extension Settings {
     )
 }
 
+public extension TargetScript {
+    static let swiftLint: TargetScript = .pre(
+        script: """
+        SWIFTLINT="${SRCROOT}/../Tuist/.build/artifacts/swiftlint/SwiftLintBinary/SwiftLintBinary.artifactbundle/macos/swiftlint"
+        CONFIG="${SRCROOT}/../.swiftlint.yml"
+        if [ -f "$SWIFTLINT" ]; then
+            "$SWIFTLINT" lint --quiet --config "$CONFIG" "${SRCROOT}/Sources"
+        else
+            echo "warning: SwiftLint binary not found at $SWIFTLINT. Run 'tuist install'."
+        fi
+        """,
+        name: "SwiftLint",
+        basedOnDependencyAnalysis: false
+    )
+}
+
 public extension Project {
     static func framework(
         name: String,
@@ -30,6 +46,7 @@ public extension Project {
                     deploymentTargets: .iOS("16.0"),
                     sources: ["Sources/**"],
                     resources: resources,
+                    scripts: [.swiftLint],
                     dependencies: dependencies,
                     settings: Settings.modular
                 )

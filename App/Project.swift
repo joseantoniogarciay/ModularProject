@@ -30,6 +30,7 @@ let project = Project(
             ]),
             sources: ["Sources/**"],
             resources: ["Resources/**"],
+            scripts: [.swiftLint],
             dependencies: [
                 .project(target: "Core", path: "../Core"),
                 .project(target: "Networking", path: "../Networking"),

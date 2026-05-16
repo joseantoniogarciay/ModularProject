@@ -13,4 +13,4 @@ xcuserdata/
 
 # Swift Package Manager
 .swiftpm/
-Package.resolved
+# Commit Package.resolved files (lock SwiftLint and any future SPM deps).
