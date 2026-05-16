@@ -10,6 +10,16 @@ import PackageDescription
             "Kingfisher": .staticFramework,
             "Pulse": .staticFramework,
             "PulseUI": .staticFramework,
+        ],
+        baseSettings: .settings(base: [
+            "IPHONEOS_DEPLOYMENT_TARGET": "17.0",
+        ]),
+        targetSettings: [
+            "Alamofire": ["IPHONEOS_DEPLOYMENT_TARGET": "17.0"],
+            "Kingfisher": ["IPHONEOS_DEPLOYMENT_TARGET": "17.0"],
+            "Pulse": ["IPHONEOS_DEPLOYMENT_TARGET": "17.0"],
+            "PulseUI": ["IPHONEOS_DEPLOYMENT_TARGET": "17.0"],
+            "PulseCore": ["IPHONEOS_DEPLOYMENT_TARGET": "17.0"],
         ]
     )
 #endif

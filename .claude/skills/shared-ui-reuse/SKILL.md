@@ -61,6 +61,53 @@ A cell, view, or component that two or more features could use goes in `SharedUI
 
 When promoting, expose only the surface the second consumer actually needs. Move the type to `SharedUI/Sources/`, mark it `public`, and update the feature to import `SharedUI` and use the public symbol. Do not leave behind a wrapper in the feature unless adapting the API is genuinely required.
 
+## Xcode previews for UIKit
+
+The `#Preview` macro supports returning `UIView` and `UIViewController` directly since iOS 17 / Xcode 15 — **no `import SwiftUI` is required**. The macro lives in `DeveloperToolsSupport`, not in `SwiftUI`; only previews that return a SwiftUI `View` need to import `SwiftUI`.
+
+Two rules to keep previews compiling without ceremony:
+
+1. **Annotate with `@available(iOS 17.0, *)`** even if your deployment target is lower. The UIKit-returning overload of `#Preview` is iOS 17+. Without the annotation, the macro falls back to the SwiftUI `View` overload, which uses `ViewBuilder` and rejects explicit `return` statements — you'll see "cannot use explicit 'return' statement in the body of result builder 'ViewBuilder'". The annotation is fine because previews are dev-only and Xcode runs them on iOS 17+ simulators.
+2. **Wrap previews in `#if DEBUG`** so they never compile into Release builds. Place them at the bottom of the same file as the type they preview — close to the code being previewed, no separate `*+Previews.swift` files needed.
+
+Pattern for a `UITableViewCell` preview:
+
+```swift
+#if DEBUG
+@available(iOS 17.0, *)
+#Preview("My Cell") {
+    let cell = MyCell(style: .default, reuseIdentifier: nil)
+    cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
+    cell.configure(with: SampleModel.preview)
+    return cell
+}
+#endif
+```
+
+Pattern for a `UIViewController` preview that needs an injected protocol (repository, use case, etc.):
+
+```swift
+#if DEBUG
+private struct PreviewSomethingRepository: SomethingRepository {
+    func list(...) async throws -> [Something] {
+        // Return hardcoded data, no network.
+    }
+}
+
+@available(iOS 17.0, *)
+#Preview("My Screen") {
+    UINavigationController(
+        rootViewController: MyViewController(
+            repository: PreviewSomethingRepository(),
+            onSelect: { _ in }
+        )
+    )
+}
+#endif
+```
+
+The fake impl lives `private` next to the preview. If you find yourself duplicating it across previews in different files, promote it to a shared `Preview*` factory inside the same feature module (still gated by `#if DEBUG`, still feature-local — do not promote to Core).
+
 ## Where SharedUI sits in the dependency graph
 
 - `SharedUI` depends on nothing — UIKit only.

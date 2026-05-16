@@ -59,3 +59,16 @@ final class PokemonCell: UITableViewCell {
         ])
     }
 }
+
+#if DEBUG
+#Preview("Pokemon Cell") {
+    let cell = PokemonCell(style: .default, reuseIdentifier: nil)
+    cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
+    cell.configure(with: Pokemon(
+        id: 25,
+        name: "Pikachu",
+        imageURL: URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png")
+    ))
+    return cell
+}
+#endif

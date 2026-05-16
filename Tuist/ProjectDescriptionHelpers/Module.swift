@@ -53,7 +53,7 @@ public extension Project {
                     destinations: .iOS,
                     product: .staticFramework,
                     bundleId: "com.modular.app.\(name.lowercased())",
-                    deploymentTargets: .iOS("16.0"),
+                    deploymentTargets: .iOS("17.0"),
                     resources: resources,
                     buildableFolders: ["Sources"],
                     scripts: [.swiftLint],
