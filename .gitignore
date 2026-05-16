@@ -14,3 +14,6 @@ xcuserdata/
 # Swift Package Manager
 .swiftpm/
 # Commit Package.resolved files (lock SwiftLint and any future SPM deps).
+
+# Claude Code (per-machine local settings)
+.claude/settings.local.json
