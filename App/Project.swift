@@ -28,8 +28,8 @@ let project = Project(
                     ],
                 ],
             ]),
-            sources: ["Sources/**"],
             resources: ["Resources/**"],
+            buildableFolders: ["Sources"],
             scripts: [.swiftLint],
             dependencies: [
                 .project(target: "Core", path: "../Core"),

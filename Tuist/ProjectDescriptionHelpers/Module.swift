@@ -44,8 +44,8 @@ public extension Project {
                     product: .staticFramework,
                     bundleId: "com.modular.app.\(name.lowercased())",
                     deploymentTargets: .iOS("16.0"),
-                    sources: ["Sources/**"],
                     resources: resources,
+                    buildableFolders: ["Sources"],
                     scripts: [.swiftLint],
                     dependencies: dependencies,
                     settings: Settings.modular
