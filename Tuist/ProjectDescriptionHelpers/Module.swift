@@ -1,15 +1,21 @@
 import ProjectDescription
 
+private let modularBaseSettings: SettingsDictionary = [
+    "SWIFT_VERSION": "6.0",
+    "SWIFT_STRICT_CONCURRENCY": "complete",
+    "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
+    "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "",
+    "DEVELOPMENT_REGION": "en",
+]
+
 extension Settings {
-    public static let modular: Settings = .settings(
-        base: [
-            "SWIFT_VERSION": "6.0",
-            "SWIFT_STRICT_CONCURRENCY": "complete",
-            "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
-            "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "",
-            "DEVELOPMENT_REGION": "en",
-        ]
-    )
+    public static let modular: Settings = .settings(base: modularBaseSettings)
+
+    public static func modular(addingConditions conditions: String) -> Settings {
+        var base = modularBaseSettings
+        base["SWIFT_ACTIVE_COMPILATION_CONDITIONS"] = "$(inherited) \(conditions)"
+        return .settings(base: base)
+    }
 }
 
 public extension TargetScript {

@@ -1,4 +1,7 @@
 import UIKit
+#if DEV
+import Core
+#endif
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -6,7 +9,10 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
-        true
+        #if DEV
+        LogCenter.backend = OSLogBackend()
+        #endif
+        return true
     }
 
     func application(

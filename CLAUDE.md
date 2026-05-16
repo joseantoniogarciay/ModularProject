@@ -39,7 +39,7 @@ ModularProject/
 - **Data**: depends on `Core` and `Networking`. Holds DTOs and repository implementations.
 - **SharedUI**: depends on nothing (UIKit only). Reusable UIKit components consumed by Features.
 - **Features/<X>**: depends only on `Core` and `SharedUI`. **Never** depends on `Networking`, `Data`, or another Feature.
-- **App**: depends on everything. The only place where concrete implementations are instantiated (DI).
+- **App**: depends on everything. The only place where concrete implementations are instantiated (DI). Ships as two targets that share the same `Sources/` and `Resources/`: `App` (`com.modular.app`, display name "App", no extra conditions) and `AppDev` (`com.modular.app.dev`, display name "App dev", defines `DEV` in `SWIFT_ACTIVE_COMPILATION_CONDITIONS`). Code gated with `#if DEV` — like the `OSLogBackend` registration in `AppDelegate` — compiles only into `AppDev`. Anything that must stay out of the production binary (logging backends, in-app debug viewers, Pulse glue in a future phase) belongs behind `#if DEV` in this layer.
 
 ### How to add a Feature
 

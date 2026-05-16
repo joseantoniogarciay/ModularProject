@@ -1,6 +1,34 @@
 import ProjectDescription
 import ProjectDescriptionHelpers
 
+private func infoPlist(displayName: String) -> [String: Plist.Value] {
+    [
+        "CFBundleDisplayName": .string(displayName),
+        "UILaunchScreen": [
+            "UIColorName": "Background",
+            "UIImageName": "Logo",
+        ],
+        "UIApplicationSceneManifest": [
+            "UIApplicationSupportsMultipleScenes": false,
+            "UISceneConfigurations": [
+                "UIWindowSceneSessionRoleApplication": [
+                    [
+                        "UISceneConfigurationName": "Default Configuration",
+                        "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate",
+                    ],
+                ],
+            ],
+        ],
+    ]
+}
+
+private let appDependencies: [TargetDependency] = [
+    .project(target: "Core", path: "../Core"),
+    .project(target: "Networking", path: "../Networking"),
+    .project(target: "Data", path: "../Data"),
+    .project(target: "Pokemon", path: "../Features/Pokemon"),
+]
+
 let project = Project(
     name: "App",
     settings: Settings.modular,
@@ -11,33 +39,25 @@ let project = Project(
             product: .app,
             bundleId: "com.modular.app",
             deploymentTargets: .iOS("16.0"),
-            infoPlist: .extendingDefault(with: [
-                "UILaunchScreen": [
-                    "UIColorName": "Background",
-                    "UIImageName": "Logo",
-                ],
-                "UIApplicationSceneManifest": [
-                    "UIApplicationSupportsMultipleScenes": false,
-                    "UISceneConfigurations": [
-                        "UIWindowSceneSessionRoleApplication": [
-                            [
-                                "UISceneConfigurationName": "Default Configuration",
-                                "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate",
-                            ],
-                        ],
-                    ],
-                ],
-            ]),
+            infoPlist: .extendingDefault(with: infoPlist(displayName: "App")),
             resources: ["Resources/**"],
             buildableFolders: ["Sources"],
             scripts: [.swiftLint],
-            dependencies: [
-                .project(target: "Core", path: "../Core"),
-                .project(target: "Networking", path: "../Networking"),
-                .project(target: "Data", path: "../Data"),
-                .project(target: "Pokemon", path: "../Features/Pokemon"),
-            ],
+            dependencies: appDependencies,
             settings: Settings.modular
+        ),
+        .target(
+            name: "AppDev",
+            destinations: .iOS,
+            product: .app,
+            bundleId: "com.modular.app.dev",
+            deploymentTargets: .iOS("16.0"),
+            infoPlist: .extendingDefault(with: infoPlist(displayName: "App dev")),
+            resources: ["Resources/**"],
+            buildableFolders: ["Sources"],
+            scripts: [.swiftLint],
+            dependencies: appDependencies,
+            settings: Settings.modular(addingConditions: "DEV")
         ),
     ]
 )
