@@ -4,11 +4,13 @@ import UIKit
 
 @MainActor
 public final class PokemonListViewController: UIViewController {
-    private let listUseCase: any ListPokemonUseCase
+    private let repository: any PokemonRepository
     private let onSelect: @MainActor (Pokemon) -> Void
+    private let pageSize: Int
 
     private let tableView = UITableView(frame: .zero, style: .plain)
     private var pokemons: [Pokemon] = []
+    private var offset: Int = 0
     private var hasMore: Bool = true
     private var loadTask: Task<Void, Never>?
 
@@ -18,10 +20,12 @@ public final class PokemonListViewController: UIViewController {
     }
 
     public init(
-        listUseCase: any ListPokemonUseCase,
+        repository: any PokemonRepository,
+        pageSize: Int = 30,
         onSelect: @escaping @MainActor (Pokemon) -> Void
     ) {
-        self.listUseCase = listUseCase
+        self.repository = repository
+        self.pageSize = pageSize
         self.onSelect = onSelect
         super.init(nibName: nil, bundle: nil)
     }
@@ -59,12 +63,14 @@ public final class PokemonListViewController: UIViewController {
 
     private func loadNext() {
         guard hasMore, loadTask == nil else { return }
-        loadTask = Task { [listUseCase] in
+        let currentOffset = offset
+        let currentPageSize = pageSize
+        loadTask = Task { [repository] in
             defer { self.loadTask = nil }
             do {
-                let page = try await listUseCase.loadNext()
+                let batch = try await repository.list(offset: currentOffset, limit: currentPageSize)
                 guard !Task.isCancelled else { return }
-                self.appendPage(page)
+                self.appendBatch(batch)
             } catch is CancellationError {
                 return
             } catch {
@@ -73,14 +79,17 @@ public final class PokemonListViewController: UIViewController {
         }
     }
 
-    private func appendPage(_ page: PokemonPage) {
+    private func appendBatch(_ batch: [Pokemon]) {
         let previousCount = pokemons.count
-        pokemons.append(contentsOf: page.items)
+        pokemons.append(contentsOf: batch)
+        offset += batch.count
         let hadMore = hasMore
-        hasMore = page.hasMore
+        if batch.count < pageSize {
+            hasMore = false
+        }
 
         tableView.performBatchUpdates {
-            if !page.items.isEmpty {
+            if !batch.isEmpty {
                 let newIndexPaths = (previousCount..<pokemons.count).map {
                     IndexPath(row: $0, section: Section.items.rawValue)
                 }

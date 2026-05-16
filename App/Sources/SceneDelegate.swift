@@ -14,7 +14,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let dependencies = AppDependencies.live()
         let listVC = PokemonListViewController(
-            listUseCase: dependencies.makeListPokemonUseCase(),
+            repository: dependencies.pokemonRepository,
             onSelect: { _ in
                 // Detail navigation lands in a follow-up commit.
             }

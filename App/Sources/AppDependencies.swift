@@ -2,20 +2,14 @@ import Core
 import Data
 import Foundation
 import Networking
-import Pokemon
 
 struct AppDependencies {
-    let makeListPokemonUseCase: @Sendable () -> any ListPokemonUseCase
-    let getPokemonDetailUseCase: any GetPokemonDetailUseCase
+    let pokemonRepository: any PokemonRepository
 
     static func live() -> AppDependencies {
         let netClient = AlamofireNetClient(userAgent: defaultUserAgent())
-        let pokemonRepository = PokemonRepositoryImpl(client: netClient)
         return AppDependencies(
-            makeListPokemonUseCase: {
-                ListPokemonUseCaseImpl(repository: pokemonRepository)
-            },
-            getPokemonDetailUseCase: GetPokemonDetailUseCaseImpl(repository: pokemonRepository)
+            pokemonRepository: PokemonRepositoryImpl(client: netClient)
         )
     }
 
