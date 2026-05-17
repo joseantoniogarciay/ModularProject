@@ -20,7 +20,7 @@ public struct PokemonRepositoryImpl: PokemonRepository {
             .queryItem(name: "offset", value: String(offset))
             .queryItem(name: "limit", value: String(limit))
             .build()
-        let response: PokemonListResponseDTO = try await client.request(request)
+        let response: PokemonListDTO = try await client.request(request)
         return response.results.compactMap { $0.toDomain() }
     }
 
