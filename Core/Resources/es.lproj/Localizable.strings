@@ -3,3 +3,6 @@
 "error_no_connection" = "Sin conexión a internet. Comprueba tu red e inténtalo de nuevo.";
 "error_generic_loading" = "Algo salió mal al cargar el contenido. Inténtalo de nuevo.";
 "retry_button_title" = "Reintentar";
+
+"pokemon_title" = "Pokémon";
+"account_title" = "Cuenta";

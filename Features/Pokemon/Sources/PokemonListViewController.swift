@@ -48,7 +48,7 @@ public final class PokemonListViewController: UIViewController {
 
     private func setupUI() {
         view.backgroundColor = .systemBackground
-        title = "Pokémon"
+        title = CoreStrings.pokemonTitle
 
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(PokemonCell.self, forCellReuseIdentifier: PokemonCell.reuseID)
