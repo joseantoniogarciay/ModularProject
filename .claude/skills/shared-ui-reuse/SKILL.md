@@ -115,7 +115,9 @@ Hard rules when you DO write a preview:
 2. **`import SwiftUI` inside that `#if DEBUG` block**, regardless of what the preview returns. Without it the macro's expansion will not resolve in any module that lacks a transitive SwiftUI import.
 3. **Place the preview at the bottom of the same file** as the type it previews — close to the code being previewed, no separate `*+Previews.swift` files.
 
-Pattern for a `UITableViewCell` preview:
+### Cell previews — always go through `CellPreview`
+
+Pattern for a `UITableViewCell` or `UICollectionViewCell` preview — wrap the configured cell in `CellPreview` (in `SharedUI/Sources/Preview/CellPreview.swift`) and return that:
 
 ```swift
 #if DEBUG
@@ -123,11 +125,42 @@ import SwiftUI
 
 #Preview("My Cell") {
     let cell = MyCell(style: .default, reuseIdentifier: nil)
-    cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
+    cell.configure(with: SampleModel.preview)
+    return CellPreview(cell, height: 80)
+}
+#endif
+```
+
+**Why not return the cell directly.** Returning a bare `UIView` from `#Preview` makes the Xcode canvas treat that view as the root of the preview viewport, and it gets stretched to fill the entire simulator window (the `cell.frame = CGRect(...)` you might be tempted to set is overwritten by the canvas). The result is a cell whose `contentView` is hundreds of points tall, with the labels flying to opposite edges because their `topAnchor`/`bottomAnchor`/`centerYAnchor` constraints resolve against that giant frame — nothing like how the cell will actually render inside a `UITableView` row.
+
+`CellPreview` is a thin SwiftUI wrapper (`UIViewRepresentable` + `.frame(width:height:)` + padding + grouped background) that gives the cell a fixed-size container — SwiftUI honors the `.frame()` and the cell renders at realistic proportions, centered in the canvas with empty space around it. `width` defaults to 375 (iPhone-ish content width); pass `height` to pin it (typical cells: 60–96), or leave `height: nil` to let the cell's intrinsic content size decide.
+
+**Anti-patterns:**
+
+```swift
+// ❌ Returning the cell directly — stretched to the whole canvas
+#Preview("My Cell") {
+    let cell = MyCell(style: .default, reuseIdentifier: nil)
+    cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)   // overwritten by the canvas
     cell.configure(with: SampleModel.preview)
     return cell
 }
-#endif
+
+// ❌ Hand-rolling a UIView host every time
+#Preview("My Cell") {
+    let cell = MyCell(...)
+    let host = UIView()
+    host.addSubview(cell)
+    // … 6 lines of constraints, slightly different each time, no padding, no background
+    return host
+}
+
+// ✅ Use the shared wrapper
+#Preview("My Cell") {
+    let cell = MyCell(style: .default, reuseIdentifier: nil)
+    cell.configure(with: SampleModel.preview)
+    return CellPreview(cell, height: 80)
+}
 ```
 
 Pattern for a `UIViewController` preview that needs an injected protocol (repository, use case, etc.):

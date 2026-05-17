@@ -88,7 +88,6 @@ import SwiftUI
 
 #Preview("Cart Item Cell") {
     let cell = CartItemCell(style: .default, reuseIdentifier: nil)
-    cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
     cell.configure(
         with: CartItem(
             id: "abc",
@@ -98,6 +97,6 @@ import SwiftUI
             quantity: 2
         )
     )
-    return cell
+    return CellPreview(cell, height: 80)
 }
 #endif

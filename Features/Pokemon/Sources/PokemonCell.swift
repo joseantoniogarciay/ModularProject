@@ -68,7 +68,6 @@ import SwiftUI
 
 #Preview("Pokemon Cell") {
     let cell = PokemonCell(style: .default, reuseIdentifier: nil)
-    cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
     cell.configure(
         with: Pokemon(
             id: 25,
@@ -77,6 +76,6 @@ import SwiftUI
         ),
         imageLoader: PreviewImageLoader()
     )
-    return cell
+    return CellPreview(cell, height: 80)
 }
 #endif
