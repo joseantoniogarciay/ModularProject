@@ -190,6 +190,8 @@ extension PokemonListViewController: RetryViewDelegate {
 }
 
 #if DEBUG
+import SwiftUI
+
 #Preview("Pokemon List") {
     UINavigationController(
         rootViewController: PokemonListViewController(

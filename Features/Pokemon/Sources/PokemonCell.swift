@@ -61,6 +61,8 @@ final class PokemonCell: UITableViewCell {
 }
 
 #if DEBUG
+import SwiftUI
+
 #Preview("Pokemon Cell") {
     let cell = PokemonCell(style: .default, reuseIdentifier: nil)
     cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)

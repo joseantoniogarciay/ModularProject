@@ -101,18 +101,26 @@ When promoting, expose only the surface the second consumer actually needs. Move
 
 ## Xcode previews for UIKit
 
-**Every `UIView` subclass and every `UIViewController` in this project must ship with an Xcode `#Preview` at the bottom of its own source file.** No exceptions for "trivial" views — if the type renders pixels, it gets a preview so it can be iterated visually without booting the simulator. A PR that adds a UIKit view/VC without a preview is incomplete.
+Previews in this project are **optional, not mandatory**. Add `#Preview` blocks where they pay off — screens you iterate on, cells with non-trivial layout, error/empty states — and skip them where they don't (e.g. plumbing views nobody ever tweaks visually). The trade-off is that `#Preview` requires `import SwiftUI`, which means even a UIKit-only module ends up touching SwiftUI in its source files for preview blocks; that is acceptable as a dev-only cost but worth weighing per-type rather than blanket-imposing.
 
-The `#Preview` macro supports returning `UIView` and `UIViewController` directly since iOS 17 / Xcode 15 — **no `import SwiftUI` is required**. The macro lives in `DeveloperToolsSupport`, not in `SwiftUI`; only previews that return a SwiftUI `View` need to import `SwiftUI`.
+The `#Preview` macro supports returning `UIView` and `UIViewController` directly since iOS 17 / Xcode 15. The macro itself lives in `DeveloperToolsSupport`, but its expansion references SwiftUI types internally — so **`import SwiftUI` is required** even when the preview returns UIKit. Put it inside the `#if DEBUG` block so it never reaches Release.
+
+If you skip the import, modules that happen to pull SwiftUI in transitively (e.g. `Features/Pokemon` via Kingfisher) may compile previews anyway, but modules that don't (e.g. `SharedUI`, which only depends on UIKit) will fail with `Compiling failed: no such module 'SwiftUI'`. Importing explicitly inside `#if DEBUG` makes the file robust regardless of the module's dep graph and costs zero in Release.
 
 The deployment target of this project is iOS 17, so **no `@available(iOS 17.0, *)` annotation is needed** in front of `#Preview`. (The annotation was historically required when the deployment was iOS 16, because the UIKit-returning overload of `#Preview` is iOS 17+. Now that the target is 17, the overload is always available and the annotation only adds noise.)
 
-Single hard rule that remains: **wrap previews in `#if DEBUG`** so they never compile into Release builds. Place them at the bottom of the same file as the type they preview — close to the code being previewed, no separate `*+Previews.swift` files needed.
+Hard rules when you DO write a preview:
+
+1. **Wrap the preview in `#if DEBUG`** so it never compiles into Release builds.
+2. **`import SwiftUI` inside that `#if DEBUG` block**, regardless of what the preview returns. Without it the macro's expansion will not resolve in any module that lacks a transitive SwiftUI import.
+3. **Place the preview at the bottom of the same file** as the type it previews — close to the code being previewed, no separate `*+Previews.swift` files.
 
 Pattern for a `UITableViewCell` preview:
 
 ```swift
 #if DEBUG
+import SwiftUI
+
 #Preview("My Cell") {
     let cell = MyCell(style: .default, reuseIdentifier: nil)
     cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
@@ -126,6 +134,8 @@ Pattern for a `UIViewController` preview that needs an injected protocol (reposi
 
 ```swift
 #if DEBUG
+import SwiftUI
+
 #Preview("My Screen") {
     UINavigationController(
         rootViewController: MyViewController(

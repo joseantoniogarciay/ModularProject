@@ -196,6 +196,8 @@ extension PokemonDetailViewController: RetryViewDelegate {
 }
 
 #if DEBUG
+import SwiftUI
+
 #Preview("Pokemon Detail") {
     UINavigationController(
         rootViewController: PokemonDetailViewController(

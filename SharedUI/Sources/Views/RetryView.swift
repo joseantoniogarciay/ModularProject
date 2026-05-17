@@ -59,6 +59,8 @@ public final class RetryView: UIView {
 }
 
 #if DEBUG
+import SwiftUI
+
 #Preview("Retry — connection") {
     let view = RetryView(frame: CGRect(x: 0, y: 0, width: 375, height: 600))
     view.configure(message: "No internet connection. Check your network and try again.")
