@@ -10,18 +10,25 @@ public struct PokemonRepositoryImpl: PokemonRepository {
         self.baseURL = baseURL
     }
 
-    public func list(offset: Int, limit: Int) async throws -> [Pokemon] {
+    public func list(offset: Int, limit: Int) async throws(PokemonListError) -> [Pokemon] {
         let request = NetRequest.Builder()
             .url(baseURL.appendingPathComponent("pokemon").absoluteString)
             .method(.get)
             .queryItem(name: "offset", value: String(offset))
             .queryItem(name: "limit", value: String(limit))
             .build()
-        let response: PokemonListDTO = try await client.request(request)
-        return response.results.compactMap { $0.toDomain() }
+        do {
+            let response: PokemonListDTO = try await client.request(request)
+            return response.results.compactMap { $0.toDomain() }
+        } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
+            throw .unknown(error)
+        } catch {
+            throw .unknown(error)
+        }
     }
 
-    public func detail(id: Int) async throws -> PokemonDetail {
+    public func detail(id: Int) async throws(PokemonDetailError) -> PokemonDetail {
         let request = NetRequest.Builder()
             .url(
                 baseURL
@@ -31,7 +38,14 @@ public struct PokemonRepositoryImpl: PokemonRepository {
             )
             .method(.get)
             .build()
-        let response: PokemonDetailDTO = try await client.request(request)
-        return response.toDomain()
+        do {
+            let response: PokemonDetailDTO = try await client.request(request)
+            return response.toDomain()
+        } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
+            throw .unknown(error)
+        } catch {
+            throw .unknown(error)
+        }
     }
 }

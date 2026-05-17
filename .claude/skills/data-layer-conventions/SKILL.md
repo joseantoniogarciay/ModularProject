@@ -84,7 +84,116 @@ A single `AuthDTOs.swift` containing all of the above is a defect — split it. 
   return LoginResult(user: response.data.user.toDomain(), tokens: …)
   ```
 
-- Translate transport errors into domain errors at the impl boundary. Catch `NetError`, inspect the status code, and throw the appropriate domain error (`AuthError.invalidCredentials`, etc.). Do not leak `NetError` to callers when a domain error exists.
+- Translate transport errors into typed domain errors at the impl boundary. Do not leak `NetError` to callers — see "Repository errors" below for the shape and mapping pattern.
+
+## Repository errors
+
+**One error type per repository method.** Each method on a `*Repository` is a single use case (a single endpoint); each use case owns its own error enum so that the error space exposed at the call site is exactly the one this endpoint can produce — nothing more, nothing less.
+
+### Where it lives
+
+The error enum lives in `Core/Sources/<Domain>/<UseCase>Error.swift`, next to the protocol that throws it. It is `public`, `Error`, and `Sendable`. The Data impl never declares its own error type — it throws the one declared in the protocol.
+
+### Shape
+
+Every per-use-case error has three layers, in order:
+
+1. `case noConnection` — transport-level signal mapped from `NetError.noConnection`. The UI uses this to show a "check your connection" affordance, so every networked use case has it.
+2. Semantic cases this endpoint can legitimately return (`.invalidCredentials`, `.usernameOrEmailTaken`, `.notFound`, …). One case per distinct outcome the call site needs to branch on. Do not add cases that this endpoint cannot produce.
+3. `case unknown(any Error)` — fallback for anything else. Carries the underlying error so logs/breadcrumbs keep the cause. The UI treats this as a generic failure.
+
+```swift
+// Core/Sources/Access/LoginError.swift
+public enum LoginError: Error, Sendable {
+    case noConnection
+    case invalidCredentials
+    case unknown(any Error)
+}
+
+// Core/Sources/Access/RegisterError.swift
+public enum RegisterError: Error, Sendable {
+    case noConnection
+    case usernameOrEmailTaken
+    case unknown(any Error)
+}
+```
+
+### Protocol signature
+
+The protocol declares the error with **typed throws** (see also `feedback-typed-throws` memory):
+
+```swift
+public protocol AccessRepository: Sendable {
+    func login(identifier: String, password: String) async throws(LoginError) -> LoginResult
+    func register(username: String, email: String, password: String) async throws(RegisterError) -> User
+}
+```
+
+### Mapping in the impl
+
+The impl translates `NetError` (and anything else) into the typed error at the method boundary. The pattern is uniform — typed catch for `NetError`, bare catch for everything else, both funneling non-mapped cases into `.unknown(error)` so the cause survives:
+
+```swift
+public func login(identifier: String, password: String) async throws(LoginError) -> LoginResult {
+    let request = /* … */
+    do {
+        let response: FreeAPIEnvelope<LoginDataDTO> = try await client.request(request)
+        return LoginResult(/* … */)
+    } catch let error as NetError {
+        if case .noConnection = error { throw .noConnection }
+        if case let .http(status, _, _) = error, status == 401 || status == 400 {
+            throw .invalidCredentials
+        }
+        throw .unknown(error)
+    } catch {
+        throw .unknown(error)
+    }
+}
+```
+
+### Why per use case, not per repository
+
+Bundling multiple endpoints' errors into one type is the smell to avoid:
+
+```swift
+// ❌ One AuthError covers login + register + refresh.
+public enum AuthError: Error, Sendable {
+    case noConnection
+    case invalidCredentials      // login only
+    case usernameOrEmailTaken    // register only
+    case refreshFailed           // refresh only
+    case unknown(any Error)
+}
+```
+
+`usernameOrEmailTaken` cannot happen on login, but the consumer of `login` is forced to handle (or default-away) a case that doesn't apply. The compiler can't help. The fix is one type per method — `LoginError` does not contain `usernameOrEmailTaken` because the endpoint cannot produce it.
+
+### Consumer side
+
+The feature catches the typed error and switches exhaustively over its cases. The catch is plain `catch { ... }` — Swift binds `error` to the typed error type automatically thanks to the protocol's typed throws (see [[feedback-typed-throws]] memory). Writing `catch let error as LoginError` is a redundant downcast and Swift warns `'as' test is always true`.
+
+```swift
+private func performLogin(id: String, password: String) async {
+    do {
+        let result = try await accessRepository.login(identifier: id, password: password)
+        handleSuccess(result)
+    } catch {
+        switch error {                                     // error: LoginError
+        case .noConnection:        show(CoreStrings.errorNoConnection)
+        case .invalidCredentials:  show(CoreStrings.errorInvalidCredentials)
+        case .unknown(let cause):  log(cause); show(CoreStrings.errorGeneric)
+        }
+    }
+}
+```
+
+Adding a new semantic case to the error breaks the call sites that don't handle it — which is the point of typed throws.
+
+**Important — keep the `do/catch` in a `func ... async`, not in a `Task { ... }` closure literal.** `Task.init`'s closure parameter is `() async throws -> T` (untyped), and per SE-0413 the closure body's effective throw type widens to `any Error` on conversion — typed inference is lost and a plain `catch` binds `error` to `any Error`, not the use-case error. Move the work to a method (`func performLogin(...) async`) and invoke it as `loadTask = Task { await self.performLogin(...) }`. See [[feedback-typed-throws]] for the full rationale.
+
+### Composite errors for orchestrated use cases
+
+When a *facade* method (a `*Session`/`*Handler`, see `feature-orchestration-conventions`) chains multiple repository calls, the facade owns its own composite error — not the repo. The composite can model failure modes that don't exist at any single endpoint (e.g. `autoLoginFailed` when register-then-login fails at the login step). The per-endpoint errors in this skill stay narrow; the composite is layered on top by the orchestrator and lives next to the facade protocol.
 
 ## URL composition
 
@@ -207,22 +316,27 @@ public struct AuthRepositoryImpl: AuthRepository {
 ```
 
 ```swift
-// ❌ Leaking NetError to callers when a domain error exists
+// ❌ Untyped throws — NetError leaks to the feature
 public func login(identifier: String, password: String) async throws -> LoginResult {
     let response: FreeAPIEnvelope<LoginDataDTO> = try await client.request(request)
     return LoginResult(…)
 }
 // A 401 reaches the feature as NetError.http(401, …), forcing UI to know about transport.
 
-// ✅ Translate at the impl boundary
-do {
-    let response: FreeAPIEnvelope<LoginDataDTO> = try await client.request(request)
-    return LoginResult(…)
-} catch let error as NetError {
-    if case let .http(status, _, _) = error, status == 401 || status == 400 {
-        throw AuthError.invalidCredentials
+// ✅ Typed throws with a per-use-case error, mapped at the impl boundary
+public func login(identifier: String, password: String) async throws(LoginError) -> LoginResult {
+    do {
+        let response: FreeAPIEnvelope<LoginDataDTO> = try await client.request(request)
+        return LoginResult(…)
+    } catch let error as NetError {
+        if case .noConnection = error { throw .noConnection }
+        if case let .http(status, _, _) = error, status == 401 || status == 400 {
+            throw .invalidCredentials
+        }
+        throw .unknown(error)
+    } catch {
+        throw .unknown(error)
     }
-    throw AuthError.underlying(error)
 }
 ```
 
@@ -230,7 +344,7 @@ do {
 
 This skill does not cover:
 
-- The contracts themselves (`*Repository` protocols, domain models, `*Error` enums) — those live in `Core` and are governed by `CLAUDE.md` → "How to add a contract".
+- The `*Repository` protocols and domain model types — those live in `Core` and are governed by `CLAUDE.md` → "How to add a contract". (Per-use-case `*Error` enums also live in `Core` but their shape **is** governed by this skill — see "Repository errors".)
 - Transport-layer types (`AlamofireNetClient`, `AuthenticatedNetClient`, `TokenRefresher`) — those live in `Networking`.
 - DI wiring of repos into the app — see `App/Sources/AppDependencies.swift`.
 - UI feedback for repository errors — that is a feature concern.

@@ -3,11 +3,11 @@ import Core
 import Foundation
 
 struct PreviewPokemonRepository: PokemonRepository {
-    func list(offset: Int, limit: Int) async throws -> [Pokemon] {
+    func list(offset: Int, limit: Int) async -> [Pokemon] {
         Self.samplePokemons
     }
 
-    func detail(id: Int) async throws -> PokemonDetail {
+    func detail(id: Int) async -> PokemonDetail {
         let sample = Self.samplePokemons.first(where: { $0.id == id })
         return PokemonDetail(
             id: id,

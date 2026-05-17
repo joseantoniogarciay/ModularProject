@@ -60,13 +60,88 @@ A facade method is allowed (and expected) to:
 - Call multiple repositories in sequence or in parallel.
 - Persist/read from `TokenStore`-like protocols.
 - Mutate its own observable state (`authState = …`) and broadcast.
-- Translate repository errors into a user-facing domain error (`AuthError`).
+- Translate repository errors into a user-facing error. One-to-one forwards re-throw the repo's typed error; multi-step orchestrations define a composite — see "Composite errors for orchestrated use cases".
 - Apply policy that doesn't belong in the data layer (proactive refresh, retry, idempotence keys, throttling).
 
 A facade method should NOT:
 - Touch UIKit. `@MainActor` is for isolation, not for `UIViewController` references.
 - Format strings for the UI. Strings are a feature concern.
 - Make HTTP requests directly. Always go through a repository.
+
+## Composite errors for orchestrated use cases
+
+A facade method that calls a single repository can re-throw the repo's typed error verbatim — the type is already shaped for one endpoint. A facade method that **chains multiple repository calls** owns its own composite error type, because the orchestration introduces failure modes that don't exist at any single endpoint. This is the orchestration-layer counterpart to the per-endpoint rule in `data-layer-conventions` → "Repository errors".
+
+### Where it lives
+
+In `Core/Sources/<Domain>/<UseCase>Error.swift`, next to the facade protocol. Named after the **user-facing operation**, not after the underlying endpoints: `SignUpError` for a register-then-login flow, not `RegisterThenLoginError`. The composite is `public`, `Error`, `Sendable`.
+
+### Shape
+
+Same three-layer rule as per-endpoint errors:
+
+1. `case noConnection` — bubbled up from whichever step actually failed at transport.
+2. Semantic cases. These include cases borrowed from the underlying endpoints **and** cases born from the orchestration itself.
+3. `case unknown(any Error)` — fallback.
+
+The orchestration-only cases are the reason this layer exists. They name failures no single endpoint can describe.
+
+```swift
+// Core/Sources/Session/SignUpError.swift
+public enum SignUpError: Error, Sendable {
+    case noConnection
+    case usernameOrEmailTaken            // borrowed from RegisterError
+    case autoLoginFailed(any Error)      // born from the orchestration:
+                                         // register succeeded, the chained login did not
+    case unknown(any Error)
+}
+```
+
+`.autoLoginFailed` has no counterpart in `LoginError` or `RegisterError` — it only makes sense at the orchestration level.
+
+### Mapping in the facade
+
+The facade catches each per-endpoint error and maps cases into the composite. Because the facade method is declared `throws(SignUpError)` and the called repo methods have their own typed throws, function-body inference treats each `try` as throwing exactly the per-endpoint type — a plain `catch { ... }` binds `error` to that type without any downcast (see [[feedback-typed-throws]]). The second step's failure does NOT bubble up as `LoginError` — the call site shouldn't have to reason about a login it did not initiate; the orchestration wraps it into `.autoLoginFailed`:
+
+```swift
+// App/Sources/Session/AuthSessionImpl.swift
+func register(username: String, email: String, password: String) async throws(SignUpError) {
+    do {
+        _ = try await accessRepository.register(
+            username: username, email: email, password: password
+        )
+    } catch {                                  // error: RegisterError
+        switch error {
+        case .noConnection:           throw .noConnection
+        case .usernameOrEmailTaken:   throw .usernameOrEmailTaken
+        case .unknown(let cause):     throw .unknown(cause)
+        }
+    }
+
+    do {
+        try await login(identifier: email, password: password)
+    } catch {                                  // error: LoginError
+        throw .autoLoginFailed(error)
+    }
+}
+```
+
+### When NOT to define a composite
+
+If a facade method calls a single repo and adds no new failure modes, do not invent a composite — re-throw the repo's typed error directly:
+
+```swift
+// AuthSession.login forwards to AccessRepository.login one-to-one
+func login(identifier: String, password: String) async throws(LoginError) {
+    let result = try await accessRepository.login(identifier: identifier, password: password)
+    await tokenStore.save(result.tokens)
+    authState = .authenticated(result.user)
+}
+```
+
+`AccessRepository.login` already returns the right set of cases (`noConnection`, `invalidCredentials`, `unknown`); the facade adds side effects (token save, state mutation) but **no new failure modes that the UI needs to branch on**. A composite here would just be a rename.
+
+The trigger to introduce a composite is **new failure modes**, not "we have a facade".
 
 ## Anti-patterns
 
@@ -101,6 +176,24 @@ public struct AccessRepositoryImpl: AccessRepository {
 // It cannot be reused in any flow that doesn't want to mutate the session
 // (e.g. a "validate credentials without logging in" test path).
 // Verdict: keep the repo dumb; the session orchestrates above it.
+```
+
+```swift
+// ❌ One error type covers every operation the session exposes.
+public enum AuthError: Error, Sendable {
+    case noConnection
+    case invalidCredentials       // login only
+    case usernameOrEmailTaken     // register-then-login only
+    case refreshFailed            // refresh only
+    case notAuthenticated         // currentUser only
+    case underlying(any Error)
+}
+// `LoginViewController` is forced to "handle" `.usernameOrEmailTaken`, and
+// `RegisterViewController` is forced to "handle" `.invalidCredentials`,
+// because the type allows both. The compiler stops helping at the call site.
+//
+// ✅ One error per use case: LoginError, SignUpError, RefreshError, CurrentUserError.
+//    Each contains exactly the cases its caller can actually see.
 ```
 
 ```swift

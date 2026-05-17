@@ -114,17 +114,20 @@ public final class PokemonDetailViewController: UIViewController {
         scrollView.isHidden = false
         retryView.isHidden = true
         activityIndicator.startAnimating()
-        loadTask = Task { [repository, pokemon] in
-            defer { self.loadTask = nil }
-            do {
-                let detail = try await repository.detail(id: pokemon.id)
-                guard !Task.isCancelled else { return }
-                self.render(detail)
-            } catch is CancellationError {
-                return
-            } catch {
-                self.handleLoadError(error)
-            }
+        loadTask = Task {
+            await self.performLoad()
+        }
+    }
+
+    private func performLoad() async {
+        defer { loadTask = nil }
+        do {
+            let detail = try await repository.detail(id: pokemon.id)
+            guard !Task.isCancelled else { return }
+            render(detail)
+        } catch {
+            guard !Task.isCancelled else { return }
+            handleLoadError(error)
         }
     }
 
@@ -155,7 +158,7 @@ public final class PokemonDetailViewController: UIViewController {
         activityIndicator.stopAnimating()
     }
 
-    private func handleLoadError(_ error: any Error) {
+    private func handleLoadError(_ error: PokemonDetailError) {
         activityIndicator.stopAnimating()
         retryView.configure(
             message: messageFor(error),
@@ -165,11 +168,11 @@ public final class PokemonDetailViewController: UIViewController {
         retryView.isHidden = false
     }
 
-    private func messageFor(_ error: any Error) -> String {
-        if let netError = error as? NetError, case .noConnection = netError {
-            return CoreStrings.errorNoConnection
+    private func messageFor(_ error: PokemonDetailError) -> String {
+        switch error {
+        case .noConnection: return CoreStrings.errorNoConnection
+        case .unknown:      return CoreStrings.errorGenericLoading
         }
-        return CoreStrings.errorGenericLoading
     }
 
     private func makeStatRow(_ stat: PokemonStat) -> UIView {

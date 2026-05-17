@@ -74,17 +74,20 @@ public final class PokemonListViewController: UIViewController {
         guard hasMore, loadTask == nil else { return }
         let currentOffset = offset
         let currentPageSize = pageSize
-        loadTask = Task { [repository] in
-            defer { self.loadTask = nil }
-            do {
-                let batch = try await repository.list(offset: currentOffset, limit: currentPageSize)
-                guard !Task.isCancelled else { return }
-                self.appendBatch(batch)
-            } catch is CancellationError {
-                return
-            } catch {
-                self.handleLoadError(error)
-            }
+        loadTask = Task {
+            await self.performLoad(offset: currentOffset, pageSize: currentPageSize)
+        }
+    }
+
+    private func performLoad(offset: Int, pageSize: Int) async {
+        defer { loadTask = nil }
+        do {
+            let batch = try await repository.list(offset: offset, limit: pageSize)
+            guard !Task.isCancelled else { return }
+            appendBatch(batch)
+        } catch {
+            guard !Task.isCancelled else { return }
+            handleLoadError(error)
         }
     }
 
@@ -110,7 +113,7 @@ public final class PokemonListViewController: UIViewController {
         }
     }
 
-    private func handleLoadError(_ error: any Error) {
+    private func handleLoadError(_ error: PokemonListError) {
         if pokemons.isEmpty {
             retryView.configure(
                 message: messageFor(error),
@@ -123,17 +126,17 @@ public final class PokemonListViewController: UIViewController {
         }
     }
 
-    private func messageFor(_ error: any Error) -> String {
-        if let netError = error as? NetError, case .noConnection = netError {
-            return CoreStrings.errorNoConnection
+    private func messageFor(_ error: PokemonListError) -> String {
+        switch error {
+        case .noConnection: return CoreStrings.errorNoConnection
+        case .unknown:      return CoreStrings.errorGenericLoading
         }
-        return CoreStrings.errorGenericLoading
     }
 
-    private func presentError(_ error: any Error) {
+    private func presentError(_ error: PokemonListError) {
         let alert = UIAlertController(
             title: "Error",
-            message: String(describing: error),
+            message: messageFor(error),
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "OK", style: .default))
