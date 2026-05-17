@@ -156,41 +156,6 @@ extension PokemonListViewController: UITableViewDelegate {
 }
 
 #if DEBUG
-private struct PreviewPokemonRepository: PokemonRepository {
-    func list(offset: Int, limit: Int) async throws -> [Pokemon] {
-        Self.samplePokemons
-    }
-
-    func detail(id: Int) async throws -> PokemonDetail {
-        PokemonDetail(
-            id: id,
-            name: "Preview",
-            imageURL: nil,
-            types: [],
-            heightDecimetres: 10,
-            weightHectograms: 100,
-            stats: []
-        )
-    }
-
-    private static let samplePokemons: [Pokemon] = {
-        let names: [String] = [
-            "Bulbasaur", "Ivysaur", "Venusaur",
-            "Charmander", "Charmeleon", "Charizard",
-            "Squirtle", "Wartortle", "Blastoise",
-            "Caterpie", "Metapod", "Butterfree",
-        ]
-        var result: [Pokemon] = []
-        for (index, name) in names.enumerated() {
-            let id: Int = index + 1
-            let urlString: String = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/\(id).png"
-            let url: URL? = URL(string: urlString)
-            result.append(Pokemon(id: id, name: name, imageURL: url))
-        }
-        return result
-    }()
-}
-
 #Preview("Pokemon List") {
     UINavigationController(
         rootViewController: PokemonListViewController(

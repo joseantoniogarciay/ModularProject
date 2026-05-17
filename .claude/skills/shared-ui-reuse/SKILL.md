@@ -63,18 +63,18 @@ When promoting, expose only the surface the second consumer actually needs. Move
 
 ## Xcode previews for UIKit
 
+**Every `UIView` subclass and every `UIViewController` in this project must ship with an Xcode `#Preview` at the bottom of its own source file.** No exceptions for "trivial" views — if the type renders pixels, it gets a preview so it can be iterated visually without booting the simulator. A PR that adds a UIKit view/VC without a preview is incomplete.
+
 The `#Preview` macro supports returning `UIView` and `UIViewController` directly since iOS 17 / Xcode 15 — **no `import SwiftUI` is required**. The macro lives in `DeveloperToolsSupport`, not in `SwiftUI`; only previews that return a SwiftUI `View` need to import `SwiftUI`.
 
-Two rules to keep previews compiling without ceremony:
+The deployment target of this project is iOS 17, so **no `@available(iOS 17.0, *)` annotation is needed** in front of `#Preview`. (The annotation was historically required when the deployment was iOS 16, because the UIKit-returning overload of `#Preview` is iOS 17+. Now that the target is 17, the overload is always available and the annotation only adds noise.)
 
-1. **Annotate with `@available(iOS 17.0, *)`** even if your deployment target is lower. The UIKit-returning overload of `#Preview` is iOS 17+. Without the annotation, the macro falls back to the SwiftUI `View` overload, which uses `ViewBuilder` and rejects explicit `return` statements — you'll see "cannot use explicit 'return' statement in the body of result builder 'ViewBuilder'". The annotation is fine because previews are dev-only and Xcode runs them on iOS 17+ simulators.
-2. **Wrap previews in `#if DEBUG`** so they never compile into Release builds. Place them at the bottom of the same file as the type they preview — close to the code being previewed, no separate `*+Previews.swift` files needed.
+Single hard rule that remains: **wrap previews in `#if DEBUG`** so they never compile into Release builds. Place them at the bottom of the same file as the type they preview — close to the code being previewed, no separate `*+Previews.swift` files needed.
 
 Pattern for a `UITableViewCell` preview:
 
 ```swift
 #if DEBUG
-@available(iOS 17.0, *)
 #Preview("My Cell") {
     let cell = MyCell(style: .default, reuseIdentifier: nil)
     cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
@@ -88,13 +88,6 @@ Pattern for a `UIViewController` preview that needs an injected protocol (reposi
 
 ```swift
 #if DEBUG
-private struct PreviewSomethingRepository: SomethingRepository {
-    func list(...) async throws -> [Something] {
-        // Return hardcoded data, no network.
-    }
-}
-
-@available(iOS 17.0, *)
 #Preview("My Screen") {
     UINavigationController(
         rootViewController: MyViewController(
@@ -105,6 +98,8 @@ private struct PreviewSomethingRepository: SomethingRepository {
 }
 #endif
 ```
+
+The `PreviewSomethingRepository` fake should be **feature-local**, not in Core. If a single feature has two or more previews that share the same fake, extract it to its own file in the feature (e.g. `Features/X/Sources/PreviewSomethingRepository.swift`, gated by `#if DEBUG`) and let every preview in that feature use it. Do not promote the fake to `Core` or `SharedUI` — preview data is not domain data.
 
 The fake impl lives `private` next to the preview. If you find yourself duplicating it across previews in different files, promote it to a shared `Preview*` factory inside the same feature module (still gated by `#if DEBUG`, still feature-local — do not promote to Core).
 

@@ -13,13 +13,19 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
 
         let dependencies = AppDependencies.live()
+        let navigationController = UINavigationController()
         let listVC = PokemonListViewController(
             repository: dependencies.pokemonRepository,
-            onSelect: { _ in
-                // Detail navigation lands in a follow-up commit.
+            onSelect: { [weak navigationController] pokemon in
+                let detailVC = PokemonDetailViewController(
+                    repository: dependencies.pokemonRepository,
+                    pokemon: pokemon
+                )
+                navigationController?.pushViewController(detailVC, animated: true)
             }
         )
-        window.rootViewController = UINavigationController(rootViewController: listVC)
+        navigationController.viewControllers = [listVC]
+        window.rootViewController = navigationController
 
         self.window = window
         window.makeKeyAndVisible()
