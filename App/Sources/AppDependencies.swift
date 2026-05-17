@@ -11,8 +11,9 @@ struct AppDependencies {
 
     static func live() -> AppDependencies {
         let netClient = AlamofireNetClient(userAgent: defaultUserAgent())
+        let pokeAPIBaseURL = URL(string: "https://pokeapi.co/api/v2")!
         return AppDependencies(
-            pokemonRepository: PokemonRepositoryImpl(client: netClient),
+            pokemonRepository: PokemonRepositoryImpl(client: netClient, baseURL: pokeAPIBaseURL),
             imageLoader: KingfisherImageLoader()
         )
     }

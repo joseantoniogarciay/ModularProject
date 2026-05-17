@@ -5,10 +5,7 @@ public struct PokemonRepositoryImpl: PokemonRepository {
     private let client: any NetClient
     private let baseURL: URL
 
-    public init(
-        client: any NetClient,
-        baseURL: URL = URL(string: "https://pokeapi.co/api/v2")!
-    ) {
+    public init(client: any NetClient, baseURL: URL) {
         self.client = client
         self.baseURL = baseURL
     }
@@ -26,7 +23,12 @@ public struct PokemonRepositoryImpl: PokemonRepository {
 
     public func detail(id: Int) async throws -> PokemonDetail {
         let request = NetRequest.Builder()
-            .url(baseURL.appendingPathComponent("pokemon/\(id)").absoluteString)
+            .url(
+                baseURL
+                    .appendingPathComponent("pokemon")
+                    .appendingPathComponent("\(id)")
+                    .absoluteString
+            )
             .method(.get)
             .build()
         let response: PokemonDetailDTO = try await client.request(request)
