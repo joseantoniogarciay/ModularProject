@@ -25,6 +25,11 @@ public actor TokenRefresher {
         self.onTokensInvalidated = handler
     }
 
+    public func invalidate() async {
+        await tokenStore.clear()
+        await onTokensInvalidated?()
+    }
+
     public func currentValidAccessToken() async throws(TokenError) -> String {
         guard let tokens = await tokenStore.load() else {
             throw .notAuthenticated

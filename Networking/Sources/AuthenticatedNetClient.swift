@@ -45,7 +45,17 @@ public struct AuthenticatedNetClient: NetClient {
             guard case let .http(status, _, _) = error, status == 401 else { throw error }
             let refreshed = try await refresher.refreshTokens()
             let retried = Self.authorize(request, with: refreshed.accessToken)
-            return try await perform(retried)
+            do {
+                return try await perform(retried)
+            } catch let retryError as NetError {
+                // Refresh said the tokens were good but the resource endpoint rejected
+                // them — revocation race or backend inconsistency. Only recovery is
+                // forcing the session to expire so the user re-authenticates.
+                if case let .http(status, _, _) = retryError, status == 401 {
+                    await refresher.invalidate()
+                }
+                throw retryError
+            }
         }
     }
 
