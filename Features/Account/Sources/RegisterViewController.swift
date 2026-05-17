@@ -93,22 +93,26 @@ final class RegisterViewController: UIViewController {
         let password = passwordField.text ?? ""
         guard !username.isEmpty, !email.isEmpty, !password.isEmpty else { return }
         enterBusy()
+        Task {
+            await self.performRegister(username: username, email: email, password: password)
+        }
+    }
+
+    private func performRegister(username: String, email: String, password: String) async {
         let tabBar = tabBarController?.tabBar
         let navigationBar = navigationController?.navigationBar
         let popGesture = navigationController?.interactivePopGestureRecognizer
-        Task { [busyOverlay, onSuccess] in
-            defer {
-                busyOverlay.hide()
-                tabBar?.isUserInteractionEnabled = true
-                navigationBar?.isUserInteractionEnabled = true
-                popGesture?.isEnabled = true
-            }
-            do {
-                try await session.register(username: username, email: email, password: password)
-                onSuccess()
-            } catch let error as AuthError {
-                showError(message(for: error))
-            }
+        defer {
+            busyOverlay.hide()
+            tabBar?.isUserInteractionEnabled = true
+            navigationBar?.isUserInteractionEnabled = true
+            popGesture?.isEnabled = true
+        }
+        do {
+            try await session.register(username: username, email: email, password: password)
+            onSuccess()
+        } catch {
+            showError(message(for: error))
         }
     }
 
@@ -126,12 +130,12 @@ final class RegisterViewController: UIViewController {
         errorLabel.isHidden = false
     }
 
-    private func message(for error: AuthError) -> String {
+    private func message(for error: SignUpError) -> String {
         switch error {
-        case .usernameOrEmailTaken:
-            return CoreStrings.accountErrorTaken
-        default:
-            return CoreStrings.accountErrorGeneric
+        case .noConnection:         return CoreStrings.errorNoConnection
+        case .usernameOrEmailTaken: return CoreStrings.accountErrorTaken
+        case .autoLoginFailed:      return CoreStrings.accountErrorGeneric
+        case .unknown:              return CoreStrings.accountErrorGeneric
         }
     }
 }

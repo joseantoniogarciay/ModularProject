@@ -10,7 +10,7 @@ public struct AccessRepositoryImpl: AccessRepository {
         self.baseURL = baseURL
     }
 
-    public func login(identifier: String, password: String) async throws(AuthError) -> LoginResult {
+    public func login(identifier: String, password: String) async throws(LoginError) -> LoginResult {
         let isEmail = identifier.contains("@")
         let body = LoginRequestBody(
             email: isEmail ? identifier : nil,
@@ -37,16 +37,17 @@ public struct AccessRepositoryImpl: AccessRepository {
             )
             return LoginResult(user: response.data.user.toDomain(), tokens: tokens)
         } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
             if case let .http(status, _, _) = error, status == 401 || status == 400 {
-                throw AuthError.invalidCredentials
+                throw .invalidCredentials
             }
-            throw AuthError.underlying(error)
+            throw .unknown(error)
         } catch {
-            throw AuthError.underlying(error)
+            throw .unknown(error)
         }
     }
 
-    public func register(username: String, email: String, password: String) async throws(AuthError) -> User {
+    public func register(username: String, email: String, password: String) async throws(RegisterError) -> User {
         let body = RegisterRequestBody(email: email, username: username, password: password, role: "USER")
         let request = NetRequest.Builder()
             .url(
@@ -63,12 +64,13 @@ public struct AccessRepositoryImpl: AccessRepository {
             let response: FreeAPIEnvelope<RegisterDataDTO> = try await client.request(request)
             return response.data.user.toDomain()
         } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
             if case let .http(status, _, _) = error, status == 409 || status == 400 {
-                throw AuthError.usernameOrEmailTaken
+                throw .usernameOrEmailTaken
             }
-            throw AuthError.underlying(error)
+            throw .unknown(error)
         } catch {
-            throw AuthError.underlying(error)
+            throw .unknown(error)
         }
     }
 }

@@ -11,6 +11,6 @@ public struct LoginResult: Sendable {
 }
 
 public protocol AccessRepository: Sendable {
-    func login(identifier: String, password: String) async throws(AuthError) -> LoginResult
-    func register(username: String, email: String, password: String) async throws(AuthError) -> User
+    func login(identifier: String, password: String) async throws(LoginError) -> LoginResult
+    func register(username: String, email: String, password: String) async throws(RegisterError) -> User
 }

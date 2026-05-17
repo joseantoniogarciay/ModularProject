@@ -49,18 +49,32 @@ final class AuthSessionImpl: AuthSession {
         }
     }
 
-    func login(identifier: String, password: String) async throws(AuthError) {
+    func login(identifier: String, password: String) async throws(LoginError) {
         let result = try await accessRepository.login(identifier: identifier, password: password)
         await tokenStore.save(result.tokens)
         authState = .authenticated(result.user)
     }
 
-    func register(username: String, email: String, password: String) async throws(AuthError) {
-        _ = try await accessRepository.register(username: username, email: email, password: password)
-        try await login(identifier: email, password: password)
+    func register(username: String, email: String, password: String) async throws(SignUpError) {
+        do {
+            _ = try await accessRepository.register(
+                username: username, email: email, password: password
+            )
+        } catch {
+            switch error {
+            case .noConnection:           throw .noConnection
+            case .usernameOrEmailTaken:   throw .usernameOrEmailTaken
+            case .unknown(let cause):     throw .unknown(cause)
+            }
+        }
+        do {
+            try await login(identifier: email, password: password)
+        } catch {
+            throw .autoLoginFailed(error)
+        }
     }
 
-    func refreshCurrentUser() async throws(AuthError) {
+    func refreshCurrentUser() async throws(CurrentUserError) {
         let user = try await userRepository.currentUser()
         authState = .authenticated(user)
     }

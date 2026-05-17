@@ -10,7 +10,7 @@ public struct AccessTokenRefreshingImpl: AccessTokenRefreshing {
         self.baseURL = baseURL
     }
 
-    public func refresh(refreshToken: String) async throws(AuthError) -> AuthTokens {
+    public func refresh(refreshToken: String) async throws(RefreshError) -> AuthTokens {
         let body = RefreshRequestBody(refreshToken: refreshToken)
         let request = NetRequest.Builder()
             .url(
@@ -30,8 +30,14 @@ public struct AccessTokenRefreshingImpl: AccessTokenRefreshing {
                 refreshToken: response.data.refreshToken,
                 accessTokenExpiresAt: JWTExpiry.expirationDate(of: response.data.accessToken)
             )
+        } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
+            if case let .http(status, _, _) = error, status == 401 || status == 403 {
+                throw .refreshTokenInvalid
+            }
+            throw .unknown(error)
         } catch {
-            throw AuthError.underlying(error)
+            throw .unknown(error)
         }
     }
 }

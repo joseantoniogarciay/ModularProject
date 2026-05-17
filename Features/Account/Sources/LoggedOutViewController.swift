@@ -106,17 +106,21 @@ final class LoggedOutViewController: UIViewController {
         let password = passwordField.text ?? ""
         guard !identifier.isEmpty, !password.isEmpty else { return }
         enterBusy()
+        Task {
+            await self.performLogin(identifier: identifier, password: password)
+        }
+    }
+
+    private func performLogin(identifier: String, password: String) async {
         let tabBar = tabBarController?.tabBar
-        Task { [busyOverlay] in
-            defer {
-                busyOverlay.hide()
-                tabBar?.isUserInteractionEnabled = true
-            }
-            do {
-                try await session.login(identifier: identifier, password: password)
-            } catch let error as AuthError {
-                showError(message(for: error))
-            }
+        defer {
+            busyOverlay.hide()
+            tabBar?.isUserInteractionEnabled = true
+        }
+        do {
+            try await session.login(identifier: identifier, password: password)
+        } catch {
+            showError(message(for: error))
         }
     }
 
@@ -136,12 +140,11 @@ final class LoggedOutViewController: UIViewController {
         errorLabel.isHidden = false
     }
 
-    private func message(for error: AuthError) -> String {
+    private func message(for error: LoginError) -> String {
         switch error {
-        case .invalidCredentials:
-            return CoreStrings.accountErrorInvalidCredentials
-        default:
-            return CoreStrings.accountErrorGeneric
+        case .noConnection:        return CoreStrings.errorNoConnection
+        case .invalidCredentials:  return CoreStrings.accountErrorInvalidCredentials
+        case .unknown:             return CoreStrings.accountErrorGeneric
         }
     }
 }

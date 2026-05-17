@@ -25,9 +25,9 @@ public actor TokenRefresher {
         self.onTokensInvalidated = handler
     }
 
-    public func currentValidAccessToken() async throws -> String {
+    public func currentValidAccessToken() async throws(TokenError) -> String {
         guard let tokens = await tokenStore.load() else {
-            throw AuthError.notAuthenticated
+            throw .notAuthenticated
         }
         if let expiresAt = tokens.accessTokenExpiresAt,
            expiresAt.timeIntervalSince(now()) <= proactiveLeeway {
@@ -37,9 +37,13 @@ public actor TokenRefresher {
     }
 
     @discardableResult
-    public func refreshTokens() async throws -> AuthTokens {
+    public func refreshTokens() async throws(TokenError) -> AuthTokens {
         if let task = inFlight {
-            return try await task.value
+            do {
+                return try await task.value
+            } catch {
+                throw .refreshFailed
+            }
         }
         let task = Task { [tokenStore, tokenRefreshing] in
             try await Self.performRefresh(tokenStore: tokenStore, tokenRefreshing: tokenRefreshing)
@@ -52,7 +56,7 @@ public actor TokenRefresher {
         } catch {
             inFlight = nil
             await onTokensInvalidated?()
-            throw error
+            throw .refreshFailed
         }
     }
 
@@ -61,7 +65,7 @@ public actor TokenRefresher {
         tokenRefreshing: any AccessTokenRefreshing
     ) async throws -> AuthTokens {
         guard let tokens = await tokenStore.load() else {
-            throw AuthError.notAuthenticated
+            throw TokenError.notAuthenticated
         }
         do {
             let refreshed = try await tokenRefreshing.refresh(refreshToken: tokens.refreshToken)
@@ -69,7 +73,7 @@ public actor TokenRefresher {
             return refreshed
         } catch {
             await tokenStore.clear()
-            throw AuthError.refreshFailed
+            throw TokenError.refreshFailed
         }
     }
 }
