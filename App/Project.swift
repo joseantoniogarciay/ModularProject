@@ -1,9 +1,15 @@
 import ProjectDescription
 import ProjectDescriptionHelpers
 
-private func infoPlist(displayName: String) -> [String: Plist.Value] {
+private func infoPlist(
+    displayName: String,
+    pokeAPIBaseURL: String,
+    freeAPIBaseURL: String
+) -> [String: Plist.Value] {
     [
         "CFBundleDisplayName": .string(displayName),
+        "PokeAPIBaseURL": .string(pokeAPIBaseURL),
+        "FreeAPIBaseURL": .string(freeAPIBaseURL),
         "UILaunchScreen": [
             "UIColorName": "Background",
             "UIImageName": "Logo",
@@ -47,7 +53,11 @@ let project = Project(
             product: .app,
             bundleId: "com.modular.app",
             deploymentTargets: .iOS("17.0"),
-            infoPlist: .extendingDefault(with: infoPlist(displayName: "App")),
+            infoPlist: .extendingDefault(with: infoPlist(
+                displayName: "App",
+                pokeAPIBaseURL: "https://pokeapi.co/api/v2",
+                freeAPIBaseURL: "https://api.freeapi.app/api/v1"
+            )),
             resources: ["Resources/**"],
             buildableFolders: ["Sources"],
             scripts: [.swiftLint],
@@ -60,7 +70,11 @@ let project = Project(
             product: .app,
             bundleId: "com.modular.app.dev",
             deploymentTargets: .iOS("17.0"),
-            infoPlist: .extendingDefault(with: infoPlist(displayName: "App dev")),
+            infoPlist: .extendingDefault(with: infoPlist(
+                displayName: "App dev",
+                pokeAPIBaseURL: "https://pokeapi.co/api/v2",
+                freeAPIBaseURL: "https://api.freeapi.app/api/v1"
+            )),
             resources: ["Resources/**"],
             buildableFolders: ["Sources"],
             scripts: [.swiftLint],

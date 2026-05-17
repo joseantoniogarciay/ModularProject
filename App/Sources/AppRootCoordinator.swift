@@ -38,10 +38,14 @@ final class AppRootCoordinator: Coordinator {
             image: UIImage(systemName: "person.crop.circle"),
             selectedImage: nil
         )
-        let accountCoordinator = AccountCoordinator(navigationController: accountNav)
+        let accountCoordinator = AccountCoordinator(
+            navigationController: accountNav,
+            session: dependencies.authSession
+        )
         accountCoordinator.delegate = self
         accountCoordinator.start()
         children.append(accountCoordinator)
+        Task { await dependencies.authSession.restore() }
 
         tabBarController.viewControllers = [pokemonNav, accountNav]
         window.rootViewController = tabBarController

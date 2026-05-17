@@ -6,3 +6,21 @@
 
 "pokemon_title" = "Pokémon";
 "account_title" = "Account";
+
+"account_logged_out_title" = "Welcome";
+"account_logged_out_subtitle" = "Log in or create an account to continue.";
+"account_username_or_email_placeholder" = "Username or email";
+"account_email_placeholder" = "Email";
+"account_username_placeholder" = "Username";
+"account_password_placeholder" = "Password";
+"account_login_button" = "Log in";
+"account_register_button" = "Create account";
+"account_register_screen_title" = "Create account";
+"account_logout_button" = "Log out";
+"account_greeting_format" = "Hello, %@";
+"account_profile_email_format" = "Email: %@";
+"account_profile_role_format" = "Role: %@";
+"account_profile_id_format" = "User ID: %@";
+"account_error_invalid_credentials" = "Invalid username or password.";
+"account_error_taken" = "That username or email is already taken.";
+"account_error_generic" = "Something went wrong. Please try again.";
