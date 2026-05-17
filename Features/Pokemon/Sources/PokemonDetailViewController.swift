@@ -1,5 +1,4 @@
 import Core
-import Kingfisher
 import SharedUI
 import UIKit
 
@@ -7,6 +6,7 @@ import UIKit
 public final class PokemonDetailViewController: UIViewController {
     private let repository: any PokemonRepository
     private let pokemon: Pokemon
+    private let imageLoader: any ImageLoader
 
     private var loadTask: Task<Void, Never>?
 
@@ -20,9 +20,14 @@ public final class PokemonDetailViewController: UIViewController {
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let retryView = RetryView()
 
-    public init(repository: any PokemonRepository, pokemon: Pokemon) {
+    public init(
+        repository: any PokemonRepository,
+        pokemon: Pokemon,
+        imageLoader: any ImageLoader
+    ) {
         self.repository = repository
         self.pokemon = pokemon
+        self.imageLoader = imageLoader
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -94,9 +99,10 @@ public final class PokemonDetailViewController: UIViewController {
     }
 
     private func showInitial() {
-        spriteImageView.kf.setImage(
-            with: pokemon.imageURL,
-            placeholder: UIImage(systemName: "photo")
+        imageLoader.setImage(
+            pokemon.imageURL,
+            placeholder: UIImage(systemName: "photo"),
+            on: spriteImageView
         )
         typesLabel.isHidden = true
         metricsLabel.isHidden = true
@@ -124,7 +130,7 @@ public final class PokemonDetailViewController: UIViewController {
 
     private func render(_ detail: PokemonDetail) {
         if let url = detail.imageURL {
-            spriteImageView.kf.setImage(with: url, placeholder: spriteImageView.image)
+            imageLoader.setImage(url, placeholder: spriteImageView.image, on: spriteImageView)
         }
 
         typesLabel.text = "Types: \(detail.types.joined(separator: ", "))"
@@ -202,7 +208,8 @@ import SwiftUI
     UINavigationController(
         rootViewController: PokemonDetailViewController(
             repository: PreviewPokemonRepository(),
-            pokemon: PreviewPokemonRepository.samplePokemons[0]
+            pokemon: PreviewPokemonRepository.samplePokemons[0],
+            imageLoader: PreviewImageLoader()
         )
     )
 }

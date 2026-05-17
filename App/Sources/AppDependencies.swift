@@ -2,14 +2,18 @@ import Core
 import Data
 import Foundation
 import Networking
+import SharedUI
 
+@MainActor
 struct AppDependencies {
     let pokemonRepository: any PokemonRepository
+    let imageLoader: any ImageLoader
 
     static func live() -> AppDependencies {
         let netClient = AlamofireNetClient(userAgent: defaultUserAgent())
         return AppDependencies(
-            pokemonRepository: PokemonRepositoryImpl(client: netClient)
+            pokemonRepository: PokemonRepositoryImpl(client: netClient),
+            imageLoader: KingfisherImageLoader()
         )
     }
 

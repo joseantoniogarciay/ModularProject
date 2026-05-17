@@ -25,7 +25,8 @@ final class AppRootCoordinator: Coordinator {
         )
         let pokemonCoordinator = PokemonCoordinator(
             navigationController: pokemonNav,
-            repository: dependencies.pokemonRepository
+            repository: dependencies.pokemonRepository,
+            imageLoader: dependencies.imageLoader
         )
         pokemonCoordinator.delegate = self
         pokemonCoordinator.start()

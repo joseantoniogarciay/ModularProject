@@ -5,6 +5,7 @@ import UIKit
 @MainActor
 public final class PokemonListViewController: UIViewController {
     private let repository: any PokemonRepository
+    private let imageLoader: any ImageLoader
     private let onSelect: @MainActor (Pokemon) -> Void
     private let pageSize: Int
 
@@ -22,10 +23,12 @@ public final class PokemonListViewController: UIViewController {
 
     public init(
         repository: any PokemonRepository,
+        imageLoader: any ImageLoader,
         pageSize: Int = 30,
         onSelect: @escaping @MainActor (Pokemon) -> Void
     ) {
         self.repository = repository
+        self.imageLoader = imageLoader
         self.pageSize = pageSize
         self.onSelect = onSelect
         super.init(nibName: nil, bundle: nil)
@@ -157,7 +160,7 @@ extension PokemonListViewController: UITableViewDataSource {
             guard let cell = tableView.dequeueReusableCell(withIdentifier: PokemonCell.reuseID, for: indexPath) as? PokemonCell else {
                 return UITableViewCell()
             }
-            cell.configure(with: pokemons[indexPath.row])
+            cell.configure(with: pokemons[indexPath.row], imageLoader: imageLoader)
             return cell
         case .loader:
             return tableView.dequeueReusableCell(withIdentifier: LoaderCell.reuseID, for: indexPath)
@@ -196,6 +199,7 @@ import SwiftUI
     UINavigationController(
         rootViewController: PokemonListViewController(
             repository: PreviewPokemonRepository(),
+            imageLoader: PreviewImageLoader(),
             onSelect: { _ in }
         )
     )

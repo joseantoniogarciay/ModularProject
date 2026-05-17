@@ -26,8 +26,10 @@ private let baseAppDependencies: [TargetDependency] = [
     .project(target: "Core", path: "../Core"),
     .project(target: "Networking", path: "../Networking"),
     .project(target: "Data", path: "../Data"),
+    .project(target: "SharedUI", path: "../SharedUI"),
     .project(target: "Pokemon", path: "../Features/Pokemon"),
     .project(target: "Account", path: "../Features/Account"),
+    .external(name: "Kingfisher"),
 ]
 
 private let devAppDependencies: [TargetDependency] = baseAppDependencies + [

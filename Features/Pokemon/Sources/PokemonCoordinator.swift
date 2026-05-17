@@ -1,4 +1,5 @@
 import Core
+import SharedUI
 import UIKit
 
 public protocol PokemonCoordinatorDelegate: AnyObject {
@@ -11,18 +12,22 @@ public final class PokemonCoordinator: Coordinator {
 
     private let navigationController: UINavigationController
     private let repository: any PokemonRepository
+    private let imageLoader: any ImageLoader
 
     public init(
         navigationController: UINavigationController,
-        repository: any PokemonRepository
+        repository: any PokemonRepository,
+        imageLoader: any ImageLoader
     ) {
         self.navigationController = navigationController
         self.repository = repository
+        self.imageLoader = imageLoader
     }
 
     public func start() {
         let listVC = PokemonListViewController(
             repository: repository,
+            imageLoader: imageLoader,
             onSelect: { [weak self] pokemon in
                 self?.showDetail(for: pokemon)
             }
@@ -33,7 +38,8 @@ public final class PokemonCoordinator: Coordinator {
     private func showDetail(for pokemon: Pokemon) {
         let detailVC = PokemonDetailViewController(
             repository: repository,
-            pokemon: pokemon
+            pokemon: pokemon,
+            imageLoader: imageLoader
         )
         navigationController.pushViewController(detailVC, animated: true)
     }

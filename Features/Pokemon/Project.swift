@@ -6,6 +6,5 @@ let project = Project.framework(
     dependencies: [
         .project(target: "Core", path: "../../Core"),
         .project(target: "SharedUI", path: "../../SharedUI"),
-        .external(name: "Kingfisher"),
     ]
 )

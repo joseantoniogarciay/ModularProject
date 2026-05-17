@@ -1,5 +1,4 @@
 import Core
-import Kingfisher
 import SharedUI
 import UIKit
 
@@ -8,6 +7,7 @@ final class PokemonCell: UITableViewCell {
 
     private let spriteImageView = UIImageView()
     private let nameLabel = UILabel()
+    private var imageLoader: (any ImageLoader)?
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -19,17 +19,20 @@ final class PokemonCell: UITableViewCell {
         fatalError("init(coder:) not supported")
     }
 
-    func configure(with pokemon: Pokemon) {
+    func configure(with pokemon: Pokemon, imageLoader: any ImageLoader) {
+        self.imageLoader = imageLoader
         nameLabel.text = pokemon.name.capitalized
-        spriteImageView.kf.setImage(
-            with: pokemon.imageURL,
-            placeholder: UIImage(systemName: "photo")
+        imageLoader.setImage(
+            pokemon.imageURL,
+            placeholder: UIImage(systemName: "photo"),
+            on: spriteImageView
         )
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        spriteImageView.kf.cancelDownloadTask()
+        imageLoader?.cancel(on: spriteImageView)
+        imageLoader = nil
         spriteImageView.image = nil
         nameLabel.text = nil
     }
@@ -66,11 +69,14 @@ import SwiftUI
 #Preview("Pokemon Cell") {
     let cell = PokemonCell(style: .default, reuseIdentifier: nil)
     cell.frame = CGRect(x: 0, y: 0, width: 375, height: 80)
-    cell.configure(with: Pokemon(
-        id: 25,
-        name: "Pikachu",
-        imageURL: URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png")
-    ))
+    cell.configure(
+        with: Pokemon(
+            id: 25,
+            name: "Pikachu",
+            imageURL: URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png")
+        ),
+        imageLoader: PreviewImageLoader()
+    )
     return cell
 }
 #endif
