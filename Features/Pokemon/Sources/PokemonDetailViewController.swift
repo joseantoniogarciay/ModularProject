@@ -18,6 +18,7 @@ public final class PokemonDetailViewController: UIViewController {
     private let statsHeaderLabel = UILabel()
     private let statsStackView = UIStackView()
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
+    private let retryView = RetryView()
 
     public init(repository: any PokemonRepository, pokemon: Pokemon) {
         self.repository = repository
@@ -85,6 +86,11 @@ public final class PokemonDetailViewController: UIViewController {
         activityIndicator.hidesWhenStopped = true
         activityIndicator.startAnimating()
         stackView.addArrangedSubview(activityIndicator)
+
+        retryView.delegate = self
+        retryView.isHidden = true
+        view.addSubview(retryView)
+        retryView.pinEdges(to: view)
     }
 
     private func showInitial() {
@@ -99,6 +105,9 @@ public final class PokemonDetailViewController: UIViewController {
     }
 
     private func loadDetail() {
+        scrollView.isHidden = false
+        retryView.isHidden = true
+        activityIndicator.startAnimating()
         loadTask = Task { [repository, pokemon] in
             defer { self.loadTask = nil }
             do {
@@ -108,7 +117,7 @@ public final class PokemonDetailViewController: UIViewController {
             } catch is CancellationError {
                 return
             } catch {
-                self.presentError(error)
+                self.handleLoadError(error)
             }
         }
     }
@@ -140,6 +149,23 @@ public final class PokemonDetailViewController: UIViewController {
         activityIndicator.stopAnimating()
     }
 
+    private func handleLoadError(_ error: any Error) {
+        activityIndicator.stopAnimating()
+        retryView.configure(
+            message: messageFor(error),
+            retryTitle: CoreStrings.retryButtonTitle
+        )
+        scrollView.isHidden = true
+        retryView.isHidden = false
+    }
+
+    private func messageFor(_ error: any Error) -> String {
+        if let netError = error as? NetError, case .noConnection = netError {
+            return CoreStrings.errorNoConnection
+        }
+        return CoreStrings.errorGenericLoading
+    }
+
     private func makeStatRow(_ stat: PokemonStat) -> UIView {
         let row = UIStackView()
         row.axis = .horizontal
@@ -161,15 +187,11 @@ public final class PokemonDetailViewController: UIViewController {
         row.addArrangedSubview(valueLabel)
         return row
     }
+}
 
-    private func presentError(_ error: any Error) {
-        let alert = UIAlertController(
-            title: "Error",
-            message: String(describing: error),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+extension PokemonDetailViewController: RetryViewDelegate {
+    public func retryViewDidTapRetry(_ retryView: RetryView) {
+        loadDetail()
     }
 }
 

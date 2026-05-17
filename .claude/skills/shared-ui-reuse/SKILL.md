@@ -37,6 +37,33 @@ Each helper sets `translatesAutoresizingMaskIntoConstraints = false` on the rece
 |---|---|
 | `LoaderCell` | Pagination footer or any "loading more" indicator in a `UITableView`. Dequeue with `LoaderCell.reuseID`. |
 
+### Reusable views — `SharedUI/Sources/Views/`
+
+| View | Use when |
+|---|---|
+| `RetryView` | Full-screen error state for a failed load with a single retry action. Configure via `configure(message:retryTitle:)`, set `delegate` to a `RetryViewDelegate`. The view is opaque — it does NOT classify the error itself; the consumer translates `Error` → message (e.g. `NetError.noConnection` → "No internet connection…", anything else → "Something went wrong…"). |
+
+## Localized strings in UIKit code
+
+**Every user-facing string in UIKit code must be localized** through Tuist's synthesized `<Module>Strings.<key>` accessor. Never `NSLocalizedString`, never `String(localized:)`, never an inline literal in a `UILabel`, `UIButton` title, alert message, or anything else the user reads.
+
+The rule applies to every UIKit type — views in `SharedUI`, cells, view controllers in features, alerts presented from anywhere. If you find yourself typing a string literal that will end up on screen, stop and add the key to the right `.strings` file first.
+
+Where strings live:
+
+- **Shared across multiple features** (retry-button title, common error messages, "Cancel" / "Done", etc.) → `Core/Resources/<locale>.lproj/Localizable.strings`. Accessor: `CoreStrings.<key>`.
+- **Specific to a single feature** (a screen title only that feature uses, a feature-specific empty-state copy) → `Features/<X>/Resources/<locale>.lproj/Localizable.strings`. Accessor: `<X>Strings.<key>`. (When a feature needs its first localized string, set up its `Resources/` folder via Tuist.)
+
+Workflow when adding or renaming a key:
+
+1. Add the key to **every** supported locale's `.strings` file at once (`en` and `es`). Missing locales silently fall back to the key name.
+2. Run `tuist generate` once — the synthesized `<Module>Strings` enum updates with the new property.
+3. Use it at call sites: `CoreStrings.errorNoConnection`.
+
+`SharedUI` reusable components (e.g. `RetryView`) may carry an **English default** at the API surface so they compile and preview in isolation, but the consumer is expected to **always pass the localized override** at configure time. The default is a fallback, not the production string.
+
+Strings that are NOT user-facing — log messages, accessibility identifiers used as test selectors, OSLog categories, asset names — are exempt. The rule is about copy that reaches the user's eyes.
+
 ## When to use the helpers (and when not)
 
 Use them whenever the layout pattern matches exactly:

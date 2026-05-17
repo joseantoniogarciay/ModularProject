@@ -9,6 +9,7 @@ public final class PokemonListViewController: UIViewController {
     private let pageSize: Int
 
     private let tableView = UITableView(frame: .zero, style: .plain)
+    private let retryView = RetryView()
     private var pokemons: [Pokemon] = []
     private var offset: Int = 0
     private var hasMore: Bool = true
@@ -59,6 +60,11 @@ public final class PokemonListViewController: UIViewController {
 
         view.addSubview(tableView)
         tableView.pinEdges(to: view)
+
+        retryView.delegate = self
+        retryView.isHidden = true
+        view.addSubview(retryView)
+        retryView.pinEdges(to: view)
     }
 
     private func loadNext() {
@@ -74,7 +80,7 @@ public final class PokemonListViewController: UIViewController {
             } catch is CancellationError {
                 return
             } catch {
-                self.presentError(error)
+                self.handleLoadError(error)
             }
         }
     }
@@ -99,6 +105,26 @@ public final class PokemonListViewController: UIViewController {
                 tableView.reloadSections([Section.loader.rawValue], with: .none)
             }
         }
+    }
+
+    private func handleLoadError(_ error: any Error) {
+        if pokemons.isEmpty {
+            retryView.configure(
+                message: messageFor(error),
+                retryTitle: CoreStrings.retryButtonTitle
+            )
+            tableView.isHidden = true
+            retryView.isHidden = false
+        } else {
+            presentError(error)
+        }
+    }
+
+    private func messageFor(_ error: any Error) -> String {
+        if let netError = error as? NetError, case .noConnection = netError {
+            return CoreStrings.errorNoConnection
+        }
+        return CoreStrings.errorGenericLoading
     }
 
     private func presentError(_ error: any Error) {
@@ -152,6 +178,14 @@ extension PokemonListViewController: UITableViewDelegate {
         if Section(rawValue: indexPath.section) == .loader {
             loadNext()
         }
+    }
+}
+
+extension PokemonListViewController: RetryViewDelegate {
+    public func retryViewDidTapRetry(_ retryView: RetryView) {
+        retryView.isHidden = true
+        tableView.isHidden = false
+        loadNext()
     }
 }
 

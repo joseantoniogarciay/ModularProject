@@ -1,1 +1,5 @@
 "welcome_title" = "Welcome";
+
+"error_no_connection" = "No internet connection. Check your network and try again.";
+"error_generic_loading" = "Something went wrong loading the content. Please try again.";
+"retry_button_title" = "Try again";
