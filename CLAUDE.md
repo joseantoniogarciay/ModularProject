@@ -65,6 +65,7 @@ xcodebuild -workspace ModularProject.xcworkspace -scheme App \
 
 - Commit messages in English.
 - Public types crossing module boundaries: `Sendable` whenever possible.
+- **No speculative protocol conformances.** Do not add `Hashable`, `Identifiable`, `Equatable`, `CaseIterable`, `Codable`, `Comparable`, etc. on a type without a current consumer that requires them. Each conformance broadens the public API surface, locks in implementation details (synthesized `==`, `hash(into:)`, etc.), and rots when later refactors invalidate it. Add the conformance in the same change that introduces its consumer. `Sendable` is the documented exception: cross-module public types should be `Sendable` even before a consumer requires it, because strict-concurrency correctness has to be designed in, not retrofitted.
 - `@MainActor` only when the type is genuinely UI-bound. Justify in review.
 - Prefer `actor` for shared mutable state over locks/queues.
 - Do not use `@unchecked Sendable` or `nonisolated(unsafe)` without a documented invariant and a removal plan.

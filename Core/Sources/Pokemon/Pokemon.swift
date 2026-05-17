@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Pokemon: Sendable, Hashable, Identifiable {
+public struct Pokemon: Sendable {
     public let id: Int
     public let name: String
     public let imageURL: URL?

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PokemonDetail: Sendable, Hashable, Identifiable {
+public struct PokemonDetail: Sendable {
     public let id: Int
     public let name: String
     public let imageURL: URL?
@@ -28,7 +28,7 @@ public struct PokemonDetail: Sendable, Hashable, Identifiable {
     }
 }
 
-public struct PokemonStat: Sendable, Hashable {
+public struct PokemonStat: Sendable {
     public let name: String
     public let baseValue: Int
 
