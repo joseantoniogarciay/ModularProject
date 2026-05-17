@@ -18,7 +18,12 @@ public struct AuthRepositoryImpl: AuthRepository {
             password: password
         )
         let request = NetRequest.Builder()
-            .url(baseURL.appendingPathComponent("users/login").absoluteString)
+            .url(
+                baseURL
+                    .appendingPathComponent("users")
+                    .appendingPathComponent("login")
+                    .absoluteString
+            )
             .method(.post)
             .body(.json(body))
             .shouldCache(false)
@@ -42,7 +47,12 @@ public struct AuthRepositoryImpl: AuthRepository {
     public func register(username: String, email: String, password: String) async throws -> User {
         let body = RegisterRequestBody(email: email, username: username, password: password, role: "USER")
         let request = NetRequest.Builder()
-            .url(baseURL.appendingPathComponent("users/register").absoluteString)
+            .url(
+                baseURL
+                    .appendingPathComponent("users")
+                    .appendingPathComponent("register")
+                    .absoluteString
+            )
             .method(.post)
             .body(.json(body))
             .shouldCache(false)
@@ -61,7 +71,12 @@ public struct AuthRepositoryImpl: AuthRepository {
     public func refresh(refreshToken: String) async throws -> AuthTokens {
         let body = RefreshRequestBody(refreshToken: refreshToken)
         let request = NetRequest.Builder()
-            .url(baseURL.appendingPathComponent("users/refresh-token").absoluteString)
+            .url(
+                baseURL
+                    .appendingPathComponent("users")
+                    .appendingPathComponent("refresh-token")
+                    .absoluteString
+            )
             .method(.post)
             .body(.json(body))
             .shouldCache(false)

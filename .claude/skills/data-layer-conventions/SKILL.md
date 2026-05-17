@@ -80,6 +80,39 @@ A single `AuthDTOs.swift` containing all of the above is a defect — split it.
 
 - Translate transport errors into domain errors at the impl boundary. Catch `NetError`, inspect the status code, and throw the appropriate domain error (`AuthError.invalidCredentials`, etc.). Do not leak `NetError` to callers when a domain error exists.
 
+## URL composition
+
+Build request URLs **one segment per `appendingPathComponent` call**. The argument must be a single path segment — no `/` inside it.
+
+```swift
+// ❌ Multi-segment string passed as one component
+.url(baseURL.appendingPathComponent("users/login").absoluteString)
+.url(baseURL.appendingPathComponent("users/current-user").absoluteString)
+
+// ✅ One segment per call
+.url(
+    baseURL
+        .appendingPathComponent("users")
+        .appendingPathComponent("login")
+        .absoluteString
+)
+```
+
+It happens to work — `URL` treats the `/` inside the string as a path separator — but it's the same operation expressed two ways inside the same module, and the multi-segment form is the one that loses. The per-segment form also degrades gracefully if a future segment is a dynamic value: a stray `/` in a user-supplied identifier passed to `appendingPathComponent` is percent-encoded when it's its own call, but silently treated as a separator when it's spliced into a literal — that asymmetry is exactly the kind of bug to avoid by being uniform now.
+
+Dynamic segments (IDs, slugs) are interpolated into their own call:
+
+```swift
+.url(
+    baseURL
+        .appendingPathComponent("pokemon")
+        .appendingPathComponent("\(id)")
+        .absoluteString
+)
+```
+
+Query parameters use the builder's `queryItem(name:value:)` — never concatenate them into the URL string.
+
 ## Imports — minimal set
 
 Data files import only what they use. The frequent mistakes:

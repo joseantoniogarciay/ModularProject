@@ -12,7 +12,12 @@ public struct UserRepositoryImpl: UserRepository {
 
     public func currentUser() async throws -> User {
         let request = NetRequest.Builder()
-            .url(baseURL.appendingPathComponent("users/current-user").absoluteString)
+            .url(
+                baseURL
+                    .appendingPathComponent("users")
+                    .appendingPathComponent("current-user")
+                    .absoluteString
+            )
             .method(.get)
             .shouldCache(false)
             .build()
