@@ -6,6 +6,9 @@ private let modularBaseSettings: SettingsDictionary = [
     "SWIFT_APPROACHABLE_CONCURRENCY": "YES",
     "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "",
     "DEVELOPMENT_REGION": "en",
+    "ENABLE_MODULE_VERIFIER": "YES",
+    "ENABLE_USER_SCRIPT_SANDBOXING": "NO",
+    "STRING_CATALOG_GENERATE_SYMBOLS": "NO",
 ]
 
 extension Settings {
