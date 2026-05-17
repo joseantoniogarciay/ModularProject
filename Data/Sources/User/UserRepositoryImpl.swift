@@ -10,7 +10,7 @@ public struct UserRepositoryImpl: UserRepository {
         self.baseURL = baseURL
     }
 
-    public func currentUser() async throws -> User {
+    public func currentUser() async throws(AuthError) -> User {
         let request = NetRequest.Builder()
             .url(
                 baseURL
@@ -21,7 +21,13 @@ public struct UserRepositoryImpl: UserRepository {
             .method(.get)
             .shouldCache(false)
             .build()
-        let response: FreeAPIEnvelope<UserDTO> = try await client.request(request)
-        return response.data.toDomain()
+        do {
+            let response: FreeAPIEnvelope<UserDTO> = try await client.request(request)
+            return response.data.toDomain()
+        } catch let error as AuthError {
+            throw error
+        } catch {
+            throw AuthError.underlying(error)
+        }
     }
 }

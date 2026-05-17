@@ -5,18 +5,21 @@ import UIKit
 @MainActor
 final class LoggedInViewController: UIViewController {
     private let session: any AuthSession
+    private weak var navigator: (any AccountNavigator)?
     private var user: User
 
     private let greetingLabel = UILabel()
     private let emailLabel = UILabel()
     private let roleLabel = UILabel()
     private let idLabel = UILabel()
+    private let cartButton = UIButton(type: .system)
     private let logoutButton = UIButton(type: .system)
     private let spinner = UIActivityIndicatorView(style: .medium)
 
-    init(session: any AuthSession, user: User) {
+    init(session: any AuthSession, user: User, navigator: (any AccountNavigator)?) {
         self.session = session
         self.user = user
+        self.navigator = navigator
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -57,6 +60,11 @@ final class LoggedInViewController: UIViewController {
             label.numberOfLines = 0
         }
 
+        cartButton.setTitle(CoreStrings.accountCartButton, for: .normal)
+        cartButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        cartButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        cartButton.addTarget(self, action: #selector(cartTapped), for: .touchUpInside)
+
         logoutButton.setTitle(CoreStrings.accountLogoutButton, for: .normal)
         logoutButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
         logoutButton.titleLabel?.adjustsFontForContentSizeCategory = true
@@ -70,6 +78,7 @@ final class LoggedInViewController: UIViewController {
             emailLabel,
             roleLabel,
             idLabel,
+            cartButton,
             logoutButton,
             spinner,
         ])
@@ -91,6 +100,10 @@ final class LoggedInViewController: UIViewController {
         emailLabel.text = CoreStrings.accountProfileEmailFormat(user.email)
         roleLabel.text = CoreStrings.accountProfileRoleFormat(user.role ?? "-")
         idLabel.text = CoreStrings.accountProfileIdFormat(user.id)
+    }
+
+    @objc private func cartTapped() {
+        navigator?.accountDidRequestCart()
     }
 
     @objc private func logoutTapped() {

@@ -4,30 +4,30 @@ import Foundation
 @MainActor
 final class AuthSessionImpl: AuthSession {
     private let tokenStore: any TokenStore
-    private let authRepository: any AuthRepository
+    private let accessRepository: any AccessRepository
     private let userRepository: any UserRepository
 
     private var continuations: [UUID: AsyncStream<AuthState>.Continuation] = [:]
 
-    private(set) var state: AuthState = .unknown {
-        didSet { broadcast(state) }
+    private(set) var authState: AuthState = .unknown {
+        didSet { broadcast(authState) }
     }
 
     init(
         tokenStore: any TokenStore,
-        authRepository: any AuthRepository,
+        accessRepository: any AccessRepository,
         userRepository: any UserRepository
     ) {
         self.tokenStore = tokenStore
-        self.authRepository = authRepository
+        self.accessRepository = accessRepository
         self.userRepository = userRepository
     }
 
-    func states() -> AsyncStream<AuthState> {
+    func authStates() -> AsyncStream<AuthState> {
         let id = UUID()
         return AsyncStream { continuation in
             continuations[id] = continuation
-            continuation.yield(state)
+            continuation.yield(authState)
             continuation.onTermination = { [weak self] _ in
                 Task { @MainActor in self?.continuations.removeValue(forKey: id) }
             }
@@ -35,43 +35,49 @@ final class AuthSessionImpl: AuthSession {
     }
 
     func restore() async {
+        guard case .unknown = authState else { return }
         guard await tokenStore.load() != nil else {
-            state = .anonymous
+            authState = .anonymous(.initial)
             return
         }
         do {
             let user = try await userRepository.currentUser()
-            state = .authenticated(user)
+            authState = .authenticated(user)
         } catch {
             await tokenStore.clear()
-            state = .anonymous
+            authState = .anonymous(.sessionExpired)
         }
     }
 
-    func login(identifier: String, password: String) async throws {
-        let result = try await authRepository.login(identifier: identifier, password: password)
+    func login(identifier: String, password: String) async throws(AuthError) {
+        let result = try await accessRepository.login(identifier: identifier, password: password)
         await tokenStore.save(result.tokens)
-        state = .authenticated(result.user)
+        authState = .authenticated(result.user)
     }
 
-    func register(username: String, email: String, password: String) async throws {
-        _ = try await authRepository.register(username: username, email: email, password: password)
+    func register(username: String, email: String, password: String) async throws(AuthError) {
+        _ = try await accessRepository.register(username: username, email: email, password: password)
         try await login(identifier: email, password: password)
     }
 
-    func refreshCurrentUser() async throws {
+    func refreshCurrentUser() async throws(AuthError) {
         let user = try await userRepository.currentUser()
-        state = .authenticated(user)
+        authState = .authenticated(user)
     }
 
     func logout() async {
         await tokenStore.clear()
-        state = .anonymous
+        authState = .anonymous(.userLoggedOut)
     }
 
-    private func broadcast(_ state: AuthState) {
+    func expireSession() async {
+        await tokenStore.clear()
+        authState = .anonymous(.sessionExpired)
+    }
+
+    private func broadcast(_ authState: AuthState) {
         for continuation in continuations.values {
-            continuation.yield(state)
+            continuation.yield(authState)
         }
     }
 }

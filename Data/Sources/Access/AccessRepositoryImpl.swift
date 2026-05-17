@@ -1,7 +1,7 @@
 import Core
 import Foundation
 
-public struct AuthRepositoryImpl: AuthRepository {
+public struct AccessRepositoryImpl: AccessRepository {
     private let client: any NetClient
     private let baseURL: URL
 
@@ -10,7 +10,7 @@ public struct AuthRepositoryImpl: AuthRepository {
         self.baseURL = baseURL
     }
 
-    public func login(identifier: String, password: String) async throws -> LoginResult {
+    public func login(identifier: String, password: String) async throws(AuthError) -> LoginResult {
         let isEmail = identifier.contains("@")
         let body = LoginRequestBody(
             email: isEmail ? identifier : nil,
@@ -41,10 +41,12 @@ public struct AuthRepositoryImpl: AuthRepository {
                 throw AuthError.invalidCredentials
             }
             throw AuthError.underlying(error)
+        } catch {
+            throw AuthError.underlying(error)
         }
     }
 
-    public func register(username: String, email: String, password: String) async throws -> User {
+    public func register(username: String, email: String, password: String) async throws(AuthError) -> User {
         let body = RegisterRequestBody(email: email, username: username, password: password, role: "USER")
         let request = NetRequest.Builder()
             .url(
@@ -65,27 +67,8 @@ public struct AuthRepositoryImpl: AuthRepository {
                 throw AuthError.usernameOrEmailTaken
             }
             throw AuthError.underlying(error)
+        } catch {
+            throw AuthError.underlying(error)
         }
-    }
-
-    public func refresh(refreshToken: String) async throws -> AuthTokens {
-        let body = RefreshRequestBody(refreshToken: refreshToken)
-        let request = NetRequest.Builder()
-            .url(
-                baseURL
-                    .appendingPathComponent("users")
-                    .appendingPathComponent("refresh-token")
-                    .absoluteString
-            )
-            .method(.post)
-            .body(.json(body))
-            .shouldCache(false)
-            .build()
-        let response: FreeAPIEnvelope<RefreshDataDTO> = try await client.request(request)
-        return AuthTokens(
-            accessToken: response.data.accessToken,
-            refreshToken: response.data.refreshToken,
-            accessTokenExpiresAt: JWTExpiry.expirationDate(of: response.data.accessToken)
-        )
     }
 }

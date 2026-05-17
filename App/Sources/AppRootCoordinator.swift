@@ -1,4 +1,5 @@
 import Account
+import Cart
 import Core
 import Pokemon
 import UIKit
@@ -45,7 +46,6 @@ final class AppRootCoordinator: Coordinator {
         accountCoordinator.delegate = self
         accountCoordinator.start()
         children.append(accountCoordinator)
-        Task { await dependencies.authSession.restore() }
 
         tabBarController.viewControllers = [pokemonNav, accountNav]
         window.rootViewController = tabBarController
@@ -54,4 +54,22 @@ final class AppRootCoordinator: Coordinator {
 }
 
 extension AppRootCoordinator: PokemonCoordinatorDelegate {}
-extension AppRootCoordinator: AccountCoordinatorDelegate {}
+
+extension AppRootCoordinator: AccountCoordinatorDelegate {
+    func accountCoordinator(
+        _ coordinator: AccountCoordinator,
+        didRequestCartIn navigationController: UINavigationController
+    ) {
+        let authSession = dependencies.authSession
+        let cartCoordinator = CartCoordinator(
+            navigationController: navigationController,
+            cartRepository: dependencies.cartRepository,
+            productsRepository: dependencies.productsRepository,
+            onSimulateSessionExpiration: {
+                await authSession.expireSession()
+            }
+        )
+        cartCoordinator.start()
+        children.append(cartCoordinator)
+    }
+}

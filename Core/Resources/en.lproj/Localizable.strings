@@ -24,3 +24,12 @@
 "account_error_invalid_credentials" = "Invalid username or password.";
 "account_error_taken" = "That username or email is already taken.";
 "account_error_generic" = "Something went wrong. Please try again.";
+"account_session_expired_message" = "Your session expired. Please log in again.";
+"account_cart_button" = "My cart";
+
+"cart_screen_title" = "My cart";
+"cart_empty" = "Your cart is empty.";
+"cart_total_format" = "Total: %@";
+"cart_item_detail_format" = "%@ × %d";
+"cart_add_failed" = "Couldn't add the product. Please try again.";
+"cart_simulate_expire_button" = "Expire";

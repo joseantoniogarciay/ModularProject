@@ -9,6 +9,8 @@ struct AppDependencies {
     let pokemonRepository: any PokemonRepository
     let imageLoader: any ImageLoader
     let authSession: any AuthSession
+    let cartRepository: any CartRepository
+    let productsRepository: any ProductsRepository
 
     static func live(configuration: AppConfiguration = .live()) -> AppDependencies {
         let userAgent = defaultUserAgent()
@@ -16,11 +18,15 @@ struct AppDependencies {
 
         let unauthenticatedClient = AlamofireNetClient(userAgent: userAgent)
         let tokenStore = KeychainTokenStore()
-        let authRepository = AuthRepositoryImpl(
+        let accessRepository = AccessRepositoryImpl(
             client: unauthenticatedClient,
             baseURL: configuration.freeAPIBaseURL
         )
-        let refresher = TokenRefresher(tokenStore: tokenStore, authRepository: authRepository)
+        let tokenRefreshing = AccessTokenRefreshingImpl(
+            client: unauthenticatedClient,
+            baseURL: configuration.freeAPIBaseURL
+        )
+        let refresher = TokenRefresher(tokenStore: tokenStore, tokenRefreshing: tokenRefreshing)
         let authenticatedClient = AuthenticatedNetClient(base: unauthenticatedClient, refresher: refresher)
         let userRepository = UserRepositoryImpl(
             client: authenticatedClient,
@@ -28,8 +34,21 @@ struct AppDependencies {
         )
         let authSession = AuthSessionImpl(
             tokenStore: tokenStore,
-            authRepository: authRepository,
+            accessRepository: accessRepository,
             userRepository: userRepository
+        )
+        Task { [refresher, authSession] in
+            await refresher.setOnTokensInvalidated { [weak authSession] in
+                await authSession?.expireSession()
+            }
+        }
+        let cartRepository = CartRepositoryImpl(
+            client: authenticatedClient,
+            baseURL: configuration.freeAPIBaseURL
+        )
+        let productsRepository = ProductsRepositoryImpl(
+            client: authenticatedClient,
+            baseURL: configuration.freeAPIBaseURL
         )
 
         return AppDependencies(
@@ -38,7 +57,9 @@ struct AppDependencies {
                 baseURL: configuration.pokeAPIBaseURL
             ),
             imageLoader: KingfisherImageLoader(),
-            authSession: authSession
+            authSession: authSession,
+            cartRepository: cartRepository,
+            productsRepository: productsRepository
         )
     }
 

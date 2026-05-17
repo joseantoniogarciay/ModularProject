@@ -12,7 +12,7 @@ final class RegisterViewController: UIViewController {
     private let passwordField = UITextField()
     private let registerButton = UIButton(type: .system)
     private let errorLabel = UILabel()
-    private let spinner = UIActivityIndicatorView(style: .medium)
+    private let busyOverlay = BusyOverlay()
 
     init(session: any AuthSession, onSuccess: @escaping () -> Void) {
         self.session = session
@@ -60,15 +60,12 @@ final class RegisterViewController: UIViewController {
         errorLabel.textAlignment = .center
         errorLabel.isHidden = true
 
-        spinner.hidesWhenStopped = true
-
         let stack = UIStackView(arrangedSubviews: [
             usernameField,
             emailField,
             passwordField,
             registerButton,
             errorLabel,
-            spinner,
         ])
         stack.axis = .vertical
         stack.spacing = 16
@@ -95,32 +92,33 @@ final class RegisterViewController: UIViewController {
         let email = emailField.text?.trimmingCharacters(in: .whitespaces) ?? ""
         let password = passwordField.text ?? ""
         guard !username.isEmpty, !email.isEmpty, !password.isEmpty else { return }
-        setBusy(true)
-        Task { [session, onSuccess] in
+        enterBusy()
+        let tabBar = tabBarController?.tabBar
+        let navigationBar = navigationController?.navigationBar
+        let popGesture = navigationController?.interactivePopGestureRecognizer
+        Task { [busyOverlay, onSuccess] in
+            defer {
+                busyOverlay.hide()
+                tabBar?.isUserInteractionEnabled = true
+                navigationBar?.isUserInteractionEnabled = true
+                popGesture?.isEnabled = true
+            }
             do {
                 try await session.register(username: username, email: email, password: password)
                 onSuccess()
             } catch let error as AuthError {
                 showError(message(for: error))
-                setBusy(false)
-            } catch {
-                showError(CoreStrings.accountErrorGeneric)
-                setBusy(false)
             }
         }
     }
 
-    private func setBusy(_ busy: Bool) {
-        registerButton.isEnabled = !busy
-        usernameField.isEnabled = !busy
-        emailField.isEnabled = !busy
-        passwordField.isEnabled = !busy
-        if busy {
-            errorLabel.isHidden = true
-            spinner.startAnimating()
-        } else {
-            spinner.stopAnimating()
-        }
+    private func enterBusy() {
+        errorLabel.isHidden = true
+        view.endEditing(true)
+        busyOverlay.show(in: view)
+        tabBarController?.tabBar.isUserInteractionEnabled = false
+        navigationController?.navigationBar.isUserInteractionEnabled = false
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
     }
 
     private func showError(_ text: String) {

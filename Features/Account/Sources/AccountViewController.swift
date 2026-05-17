@@ -8,7 +8,7 @@ final class AccountViewController: UIViewController {
     private weak var navigator: (any AccountNavigator)?
     private var observationTask: Task<Void, Never>?
     private var currentChild: UIViewController?
-    private var renderedState: AuthState?
+    private var renderedAuthState: AuthState?
 
     init(session: any AuthSession, navigator: any AccountNavigator) {
         self.session = session
@@ -32,17 +32,23 @@ final class AccountViewController: UIViewController {
 
         observationTask = Task { [weak self] in
             guard let self else { return }
-            for await state in self.session.states() {
-                self.render(state)
+            for await authState in self.session.authStates() {
+                self.render(authState)
             }
+        }
+
+        Task { [session] in
+            await session.restore()
         }
     }
 
-    private func render(_ state: AuthState) {
-        defer { renderedState = state }
+    private func render(_ authState: AuthState) {
+        defer { renderedAuthState = authState }
 
-        switch (renderedState, state) {
-        case (.unknown?, .unknown), (.anonymous?, .anonymous):
+        switch (renderedAuthState, authState) {
+        case (.unknown?, .unknown):
+            return
+        case let (.anonymous(prev)?, .anonymous(new)) where prev == new:
             return
         case let (.authenticated(previous)?, .authenticated(new)) where previous.id == new.id:
             (currentChild as? LoggedInViewController)?.update(user: new)
@@ -51,15 +57,32 @@ final class AccountViewController: UIViewController {
             break
         }
 
-        switch state {
+        switch authState {
         case .unknown:
             swap(in: makeLoadingViewController())
-        case .anonymous:
+        case .anonymous(let reason):
             let loggedOut = LoggedOutViewController(session: session, navigator: navigator)
             swap(in: loggedOut)
+            navigationController?.popToRootViewController(animated: true)
+            presentBanner(for: reason)
         case .authenticated(let user):
-            let loggedIn = LoggedInViewController(session: session, user: user)
+            let loggedIn = LoggedInViewController(session: session, user: user, navigator: navigator)
             swap(in: loggedIn)
+        }
+    }
+
+    private func presentBanner(for reason: AnonymousReason) {
+        switch reason {
+        case .sessionExpired:
+            BannerCenter.shared.show(
+                BannerPayload(
+                    message: CoreStrings.accountSessionExpiredMessage,
+                    style: .warning,
+                    iconSystemName: "exclamationmark.triangle.fill"
+                )
+            )
+        case .initial, .userLoggedOut:
+            break
         }
     }
 

@@ -14,7 +14,7 @@ final class LoggedOutViewController: UIViewController {
     private let loginButton = UIButton(type: .system)
     private let registerButton = UIButton(type: .system)
     private let errorLabel = UILabel()
-    private let spinner = UIActivityIndicatorView(style: .medium)
+    private let busyOverlay = BusyOverlay()
 
     init(session: any AuthSession, navigator: (any AccountNavigator)?) {
         self.session = session
@@ -72,8 +72,6 @@ final class LoggedOutViewController: UIViewController {
         errorLabel.textAlignment = .center
         errorLabel.isHidden = true
 
-        spinner.hidesWhenStopped = true
-
         let stack = UIStackView(arrangedSubviews: [
             titleLabel,
             subtitleLabel,
@@ -81,7 +79,6 @@ final class LoggedOutViewController: UIViewController {
             passwordField,
             loginButton,
             errorLabel,
-            spinner,
             registerButton,
         ])
         stack.axis = .vertical
@@ -108,16 +105,17 @@ final class LoggedOutViewController: UIViewController {
         let identifier = identifierField.text?.trimmingCharacters(in: .whitespaces) ?? ""
         let password = passwordField.text ?? ""
         guard !identifier.isEmpty, !password.isEmpty else { return }
-        setBusy(true)
-        Task { [session] in
+        enterBusy()
+        let tabBar = tabBarController?.tabBar
+        Task { [busyOverlay] in
+            defer {
+                busyOverlay.hide()
+                tabBar?.isUserInteractionEnabled = true
+            }
             do {
                 try await session.login(identifier: identifier, password: password)
             } catch let error as AuthError {
                 showError(message(for: error))
-                setBusy(false)
-            } catch {
-                showError(CoreStrings.accountErrorGeneric)
-                setBusy(false)
             }
         }
     }
@@ -126,17 +124,11 @@ final class LoggedOutViewController: UIViewController {
         navigator?.accountDidRequestRegister()
     }
 
-    private func setBusy(_ busy: Bool) {
-        loginButton.isEnabled = !busy
-        registerButton.isEnabled = !busy
-        identifierField.isEnabled = !busy
-        passwordField.isEnabled = !busy
-        if busy {
-            errorLabel.isHidden = true
-            spinner.startAnimating()
-        } else {
-            spinner.stopAnimating()
-        }
+    private func enterBusy() {
+        errorLabel.isHidden = true
+        view.endEditing(true)
+        busyOverlay.show(in: view)
+        tabBarController?.tabBar.isUserInteractionEnabled = false
     }
 
     private func showError(_ text: String) {

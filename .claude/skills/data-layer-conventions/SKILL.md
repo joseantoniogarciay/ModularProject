@@ -11,14 +11,14 @@ The `Data` module holds the concrete implementations of the `*Repository` protoc
 
 ```
 Data/Sources/
-└── <Domain>/                 # one folder per domain (Pokemon, Auth, …)
+└── <Domain>/                 # one folder per domain (Pokemon, Access, User, …)
     ├── <Endpoint>DTO.swift    # one file per use case (see "DTO file split")
     ├── …
     ├── <Domain>RepositoryImpl.swift
     └── (optional) <SharedEnvelope>.swift
 ```
 
-`<Domain>` matches the contract in `Core/Sources/<Domain>/` (e.g. `Core/Sources/Auth/` ↔ `Data/Sources/Auth/`).
+`<Domain>` mirrors `Core/Sources/<Domain>/`. Domain names match the bounded contracts, not generic umbrellas — e.g. `Access/` (login, register, refresh, tokens) and `User/` (identity) are separate folders both in `Core` and `Data`, not bundled into a single `Auth/`. If you find yourself wanting an umbrella folder ("Auth" with both access and identity concerns), that is the smell — split it.
 
 ## DTO file split — THE rule
 
@@ -45,17 +45,23 @@ Data/Sources/
 ### Worked example
 
 ```
-Data/Sources/Auth/
-├── FreeAPIEnvelope.swift      # shared response wrapper
-├── UserDTO.swift              # UserDTO + AvatarDTO + toDomain()  (shared across endpoints)
-├── LoginDTO.swift             # LoginRequestBody + LoginDataDTO
-├── RegisterDTO.swift          # RegisterRequestBody + RegisterDataDTO
-├── RefreshTokenDTO.swift      # RefreshRequestBody + RefreshDataDTO
-├── AuthRepositoryImpl.swift
-└── UserRepositoryImpl.swift
+Data/Sources/
+├── FreeAPI/
+│   └── FreeAPIEnvelope.swift             # shared response wrapper for any FreeAPI domain
+├── Access/
+│   ├── LoginDTO.swift                    # LoginRequestBody + LoginDataDTO
+│   ├── RegisterDTO.swift                 # RegisterRequestBody + RegisterDataDTO
+│   ├── RefreshTokenDTO.swift             # RefreshRequestBody + RefreshDataDTO
+│   ├── AccessRepositoryImpl.swift        # login + register
+│   └── AccessTokenRefreshingImpl.swift   # refresh
+└── User/
+    ├── UserDTO.swift                     # UserDTO + AvatarDTO + toDomain()
+    └── UserRepositoryImpl.swift          # current-user
 ```
 
-A single `AuthDTOs.swift` containing all of the above is a defect — split it.
+The shared envelope lives in `Data/Sources/<APIName>/` (e.g. `FreeAPI/`), not inside a domain folder. It is API-shaped, not domain-shaped — multiple domains under the same API consume it. Keeping it in one domain folder forces other domains to reach across folders, which is exactly the layering smell to avoid.
+
+A single `AuthDTOs.swift` containing all of the above is a defect — split it. Likewise, a single `Auth/` folder mixing access-flow files and identity files is the same defect at folder granularity — split it.
 
 ## DTO type rules
 

@@ -2,7 +2,11 @@ import Core
 import UIKit
 
 public protocol AccountCoordinatorDelegate: AnyObject {
-    // Cross-feature transitions land here as the feature graph grows.
+    @MainActor
+    func accountCoordinator(
+        _ coordinator: AccountCoordinator,
+        didRequestCartIn navigationController: UINavigationController
+    )
 }
 
 @MainActor
@@ -33,5 +37,9 @@ public final class AccountCoordinator: Coordinator {
 extension AccountCoordinator: AccountNavigator {
     func accountDidRequestRegister() {
         showRegister()
+    }
+
+    func accountDidRequestCart() {
+        delegate?.accountCoordinator(self, didRequestCartIn: navigationController)
     }
 }

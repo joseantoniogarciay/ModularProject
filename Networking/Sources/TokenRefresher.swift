@@ -3,21 +3,26 @@ import Foundation
 
 public actor TokenRefresher {
     private let tokenStore: any TokenStore
-    private let authRepository: any AuthRepository
+    private let tokenRefreshing: any AccessTokenRefreshing
     private let proactiveLeeway: TimeInterval
     private let now: @Sendable () -> Date
     private var inFlight: Task<AuthTokens, any Error>?
+    private var onTokensInvalidated: (@Sendable () async -> Void)?
 
     public init(
         tokenStore: any TokenStore,
-        authRepository: any AuthRepository,
+        tokenRefreshing: any AccessTokenRefreshing,
         proactiveLeeway: TimeInterval = 60,
         now: @escaping @Sendable () -> Date = Date.init
     ) {
         self.tokenStore = tokenStore
-        self.authRepository = authRepository
+        self.tokenRefreshing = tokenRefreshing
         self.proactiveLeeway = proactiveLeeway
         self.now = now
+    }
+
+    public func setOnTokensInvalidated(_ handler: @escaping @Sendable () async -> Void) {
+        self.onTokensInvalidated = handler
     }
 
     public func currentValidAccessToken() async throws -> String {
@@ -36,8 +41,8 @@ public actor TokenRefresher {
         if let task = inFlight {
             return try await task.value
         }
-        let task = Task { [tokenStore, authRepository] in
-            try await Self.performRefresh(tokenStore: tokenStore, authRepository: authRepository)
+        let task = Task { [tokenStore, tokenRefreshing] in
+            try await Self.performRefresh(tokenStore: tokenStore, tokenRefreshing: tokenRefreshing)
         }
         inFlight = task
         do {
@@ -46,19 +51,20 @@ public actor TokenRefresher {
             return result
         } catch {
             inFlight = nil
+            await onTokensInvalidated?()
             throw error
         }
     }
 
     private static func performRefresh(
         tokenStore: any TokenStore,
-        authRepository: any AuthRepository
+        tokenRefreshing: any AccessTokenRefreshing
     ) async throws -> AuthTokens {
         guard let tokens = await tokenStore.load() else {
             throw AuthError.notAuthenticated
         }
         do {
-            let refreshed = try await authRepository.refresh(refreshToken: tokens.refreshToken)
+            let refreshed = try await tokenRefreshing.refresh(refreshToken: tokens.refreshToken)
             await tokenStore.save(refreshed)
             return refreshed
         } catch {
