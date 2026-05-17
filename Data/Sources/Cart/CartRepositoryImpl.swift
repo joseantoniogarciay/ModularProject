@@ -10,7 +10,7 @@ public struct CartRepositoryImpl: CartRepository {
         self.baseURL = baseURL
     }
 
-    public func get() async throws -> Cart {
+    public func get() async throws(CartFetchError) -> Cart {
         let request = NetRequest.Builder()
             .url(
                 baseURL
@@ -21,11 +21,21 @@ public struct CartRepositoryImpl: CartRepository {
             .method(.get)
             .shouldCache(false)
             .build()
-        let response: FreeAPIEnvelope<CartDataDTO> = try await client.request(request)
-        return response.data.toDomain()
+        do {
+            let response: FreeAPIEnvelope<CartDataDTO> = try await client.request(request)
+            return response.data.toDomain()
+        } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
+            if case let .http(status, _, _) = error, status == 401 { throw .notAuthenticated }
+            throw .unknown(error)
+        } catch is TokenError {
+            throw .notAuthenticated
+        } catch {
+            throw .unknown(error)
+        }
     }
 
-    public func addItem(productId: String) async throws -> Cart {
+    public func addItem(productId: String) async throws(CartAddItemError) -> Cart {
         let request = NetRequest.Builder()
             .url(
                 baseURL
@@ -38,7 +48,17 @@ public struct CartRepositoryImpl: CartRepository {
             .method(.post)
             .shouldCache(false)
             .build()
-        let response: FreeAPIEnvelope<CartDataDTO> = try await client.request(request)
-        return response.data.toDomain()
+        do {
+            let response: FreeAPIEnvelope<CartDataDTO> = try await client.request(request)
+            return response.data.toDomain()
+        } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
+            if case let .http(status, _, _) = error, status == 401 { throw .notAuthenticated }
+            throw .unknown(error)
+        } catch is TokenError {
+            throw .notAuthenticated
+        } catch {
+            throw .unknown(error)
+        }
     }
 }

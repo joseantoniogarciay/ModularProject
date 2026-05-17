@@ -120,44 +120,51 @@ public final class CartViewController: UIViewController {
         tableView.isHidden = true
         retryView.isHidden = true
         emptyLabel.isHidden = true
+        loadTask = Task { await self.performLoad() }
+    }
 
-        loadTask = Task { [cartRepository] in
-            defer { self.loadTask = nil }
-            do {
-                let fetched = try await cartRepository.get()
-                guard !Task.isCancelled else { return }
-                self.handleLoaded(fetched)
-            } catch is CancellationError {
-                return
-            } catch {
-                self.handleLoadError(error)
-            }
+    private func performLoad() async {
+        defer { loadTask = nil }
+        do {
+            let fetched = try await cartRepository.get()
+            guard !Task.isCancelled else { return }
+            handleLoaded(fetched)
+        } catch {
+            guard !Task.isCancelled else { return }
+            handleLoadError(error)
         }
     }
 
     @objc private func addRandomTapped() {
         guard addTask == nil else { return }
         navigationItem.rightBarButtonItems = loadingRightBarItems
+        addTask = Task { await self.performAdd() }
+    }
 
-        addTask = Task { [cartRepository, productsRepository] in
-            defer {
-                self.addTask = nil
-                self.navigationItem.rightBarButtonItems = self.defaultRightBarItems
-            }
-            do {
-                let products = try await productsRepository.list()
-                guard let productId = products.randomElement()?.id else {
-                    self.presentAddError(CoreStrings.cartAddFailed)
-                    return
-                }
-                let updated = try await cartRepository.addItem(productId: productId)
-                guard !Task.isCancelled else { return }
-                self.handleLoaded(updated)
-            } catch is CancellationError {
-                return
-            } catch {
-                self.presentAddError(CoreStrings.cartAddFailed)
-            }
+    private func performAdd() async {
+        defer {
+            addTask = nil
+            navigationItem.rightBarButtonItems = defaultRightBarItems
+        }
+        let products: [Product]
+        do {
+            products = try await productsRepository.list()
+        } catch {
+            guard !Task.isCancelled else { return }
+            presentAddError(messageFor(productsError: error))
+            return
+        }
+        guard let productId = products.randomElement()?.id else {
+            presentAddError(CoreStrings.cartAddFailed)
+            return
+        }
+        do {
+            let updated = try await cartRepository.addItem(productId: productId)
+            guard !Task.isCancelled else { return }
+            handleLoaded(updated)
+        } catch {
+            guard !Task.isCancelled else { return }
+            presentAddError(messageFor(addError: error))
         }
     }
 
@@ -191,10 +198,10 @@ public final class CartViewController: UIViewController {
         }
     }
 
-    private func handleLoadError(_ error: any Error) {
+    private func handleLoadError(_ error: CartFetchError) {
         spinner.stopAnimating()
         retryView.configure(
-            message: messageFor(error),
+            message: messageFor(loadError: error),
             retryTitle: CoreStrings.retryButtonTitle
         )
         tableView.isHidden = true
@@ -202,11 +209,28 @@ public final class CartViewController: UIViewController {
         retryView.isHidden = false
     }
 
-    private func messageFor(_ error: any Error) -> String {
-        if let netError = error as? NetError, case .noConnection = netError {
-            return CoreStrings.errorNoConnection
+    private func messageFor(loadError error: CartFetchError) -> String {
+        switch error {
+        case .noConnection:     return CoreStrings.errorNoConnection
+        case .notAuthenticated: return CoreStrings.errorGenericLoading
+        case .unknown:          return CoreStrings.errorGenericLoading
         }
-        return CoreStrings.errorGenericLoading
+    }
+
+    private func messageFor(productsError error: ProductsListError) -> String {
+        switch error {
+        case .noConnection:     return CoreStrings.errorNoConnection
+        case .notAuthenticated: return CoreStrings.cartAddFailed
+        case .unknown:          return CoreStrings.cartAddFailed
+        }
+    }
+
+    private func messageFor(addError error: CartAddItemError) -> String {
+        switch error {
+        case .noConnection:     return CoreStrings.errorNoConnection
+        case .notAuthenticated: return CoreStrings.cartAddFailed
+        case .unknown:          return CoreStrings.cartAddFailed
+        }
     }
 }
 

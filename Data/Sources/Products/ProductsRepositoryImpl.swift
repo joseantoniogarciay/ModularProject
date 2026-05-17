@@ -10,7 +10,7 @@ public struct ProductsRepositoryImpl: ProductsRepository {
         self.baseURL = baseURL
     }
 
-    public func list() async throws -> [Product] {
+    public func list() async throws(ProductsListError) -> [Product] {
         let request = NetRequest.Builder()
             .url(
                 baseURL
@@ -21,7 +21,17 @@ public struct ProductsRepositoryImpl: ProductsRepository {
             .method(.get)
             .shouldCache(false)
             .build()
-        let response: FreeAPIEnvelope<ProductListDataDTO> = try await client.request(request)
-        return response.data.products.map { $0.toDomain() }
+        do {
+            let response: FreeAPIEnvelope<ProductListDataDTO> = try await client.request(request)
+            return response.data.products.map { $0.toDomain() }
+        } catch let error as NetError {
+            if case .noConnection = error { throw .noConnection }
+            if case let .http(status, _, _) = error, status == 401 { throw .notAuthenticated }
+            throw .unknown(error)
+        } catch is TokenError {
+            throw .notAuthenticated
+        } catch {
+            throw .unknown(error)
+        }
     }
 }

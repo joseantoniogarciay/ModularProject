@@ -1,5 +1,5 @@
 import Foundation
 
 public protocol ProductsRepository: Sendable {
-    func list() async throws -> [Product]
+    func list() async throws(ProductsListError) -> [Product]
 }
