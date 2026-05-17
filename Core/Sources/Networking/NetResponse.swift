@@ -1,6 +1,6 @@
 import Foundation
 
-public struct NetworkResponse: Sendable {
+public struct NetResponse: Sendable {
     public let statusCode: Int
     public let data: Data?
     public let headers: [String: String]?

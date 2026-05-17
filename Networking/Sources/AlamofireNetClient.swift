@@ -26,14 +26,14 @@ public struct AlamofireNetClient: NetClient {
         )
     }
 
-    public func request(_ request: NetRequest) async throws -> NetworkResponse {
+    public func request(_ request: NetRequest) async throws -> NetResponse {
         let dataRequest = try makeDataRequest(request)
         return try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<NetworkResponse, any Error>) in
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<NetResponse, any Error>) in
                 dataRequest.validate().response(queue: .global()) { dataResponse in
                     switch dataResponse.result {
                     case .success(let data):
-                        continuation.resume(returning: NetworkResponse(
+                        continuation.resume(returning: NetResponse(
                             statusCode: dataResponse.response?.statusCode ?? -1,
                             data: data,
                             headers: dataResponse.request?.allHTTPHeaderFields
@@ -75,7 +75,7 @@ public struct AlamofireNetClient: NetClient {
         archives: [FormData],
         jsonKey: String,
         progress: (@Sendable (Double) -> Void)?
-    ) async throws -> NetworkResponse {
+    ) async throws -> NetResponse {
         guard let url = URL(string: request.url) else {
             throw NetError.invalidURL
         }
@@ -117,11 +117,11 @@ public struct AlamofireNetClient: NetClient {
         }
 
         return try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<NetworkResponse, any Error>) in
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<NetResponse, any Error>) in
                 uploadRequest.validate().response(queue: .global()) { dataResponse in
                     switch dataResponse.result {
                     case .success(let data):
-                        continuation.resume(returning: NetworkResponse(
+                        continuation.resume(returning: NetResponse(
                             statusCode: dataResponse.response?.statusCode ?? -1,
                             data: data,
                             headers: dataResponse.request?.allHTTPHeaderFields

@@ -10,7 +10,7 @@ public struct AuthenticatedNetClient: NetClient {
         self.refresher = refresher
     }
 
-    public func request(_ request: NetRequest) async throws -> NetworkResponse {
+    public func request(_ request: NetRequest) async throws -> NetResponse {
         try await send(request) { try await base.request($0) }
     }
 
@@ -23,7 +23,7 @@ public struct AuthenticatedNetClient: NetClient {
         archives: [FormData],
         jsonKey: String,
         progress: (@Sendable (Double) -> Void)?
-    ) async throws -> NetworkResponse {
+    ) async throws -> NetResponse {
         try await send(request) {
             try await base.upload($0, archives: archives, jsonKey: jsonKey, progress: progress)
         }

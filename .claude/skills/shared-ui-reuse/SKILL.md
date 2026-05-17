@@ -168,6 +168,17 @@ If a non-feature module ever needs a UIKit helper, that is a signal the helper m
 - **Importing `SharedUI` and still writing raw constraints for cases listed in the helpers table above.** Fix: review the table; refactor.
 - **Adding a feature-specific helper to `SharedUI` because it "kind of fits".** Fix: keep it in the feature until a second use case shows up.
 
+## Not a violation (false positives to avoid)
+
+These patterns **look** like SharedUI under-use at first glance but are correct under the rules above. Do not flag them in audits or "fix" them.
+
+- **`view.translatesAutoresizingMaskIntoConstraints = false` followed by an explicit `NSLayoutConstraint.activate([...])` block** where the constraints reference `layoutMarginsGuide`, `safeAreaLayoutGuide`, `readableContentGuide`, a sibling view's anchor, or only a subset of edges. The manual line is **required** here — no helper applies, and forgetting it breaks the layout. The rule against setting it manually only applies *next to a helper call*.
+- **A view that uses `pinSize`/`pinEdges`/`centerInSuperview` for one axis and explicit constraints for another** (e.g. `imageView.pinSize(60)` plus an explicit `leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor)`). Mixing is fine — the helper covers what it covers, and the explicit block handles the exceptions.
+- **A cell or view that subclasses `UITableViewCell` / `UIView` and writes its own `setupViews()` with raw constraints**, when the constraints fall into the exception list (sibling anchors, margins guide, priorities, animation references). Subclassing UIKit types is not a violation by itself; only *re-implementing functionality that already exists in SharedUI* is.
+- **A feature view controller that writes `NSLayoutConstraint.activate([...])` against `view.safeAreaLayoutGuide.topAnchor` or `view.layoutMarginsGuide.leadingAnchor`.** These are explicit by design — there is no `pinEdges(to: safeArea)` helper, and adding one would not simplify the call site enough to be worth a separate API.
+
+Before flagging a `translatesAutoresizingMaskIntoConstraints = false` or an `NSLayoutConstraint.activate([...])` block: **look at the anchors in the block**. If any anchor matches an exception above, the explicit form is correct.
+
 ## Non-goals
 
 This skill does not cover:

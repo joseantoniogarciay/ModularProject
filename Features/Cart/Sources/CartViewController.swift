@@ -79,7 +79,6 @@ public final class CartViewController: UIViewController {
         loadingRightBarItems = [activityItem, expireButton]
         navigationItem.rightBarButtonItems = defaultRightBarItems
 
-        tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(CartItemCell.self, forCellReuseIdentifier: CartItemCell.reuseID)
         tableView.dataSource = self
         tableView.delegate = self
