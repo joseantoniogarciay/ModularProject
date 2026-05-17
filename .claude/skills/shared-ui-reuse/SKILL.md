@@ -7,9 +7,20 @@ description: Enforce reuse of components and helpers from the SharedUI module wh
 
 `SharedUI` is the project's UIKit toolbox: AutoLayout helpers, reusable cells, and common views. Every feature that touches UIKit must reuse what is already there instead of redoing it, and must promote new repeating patterns into the module.
 
+## How SharedUI/Sources is organized
+
+```
+SharedUI/Sources/
+├── Cells/        — reusable UITableView/UICollectionView cells.
+├── Views/        — reusable UIView subclasses (error/empty states, banners, ...).
+└── Extensions/   — UIKit extensions (layout helpers, conveniences).
+```
+
+When adding a new reusable type, place it in the matching subfolder. If a new role appears (e.g. controllers, configurations), create a new subfolder rather than mixing.
+
 ## What lives in SharedUI today
 
-### Layout helpers — `SharedUI/Sources/UIView+AutoLayout.swift`
+### Layout helpers — `SharedUI/Sources/Extensions/UIView+AutoLayout.swift`
 
 | Helper | Use when |
 |---|---|
@@ -20,7 +31,7 @@ description: Enforce reuse of components and helpers from the SharedUI module wh
 
 Each helper sets `translatesAutoresizingMaskIntoConstraints = false` on the receiver. **Do not set it manually for views that are fully constrained via a helper** — it is redundant and a code-review smell.
 
-### Reusable cells — `SharedUI/Sources/LoaderCell.swift`
+### Reusable cells — `SharedUI/Sources/Cells/`
 
 | Cell | Use when |
 |---|---|
