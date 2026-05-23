@@ -16,5 +16,8 @@ xcuserdata/
 .swiftpm/
 # Commit Package.resolved files (lock SwiftLint and any future SPM deps).
 
+# Build timing reports (local, not committed)
+.build-reports/
+
 # Claude Code (per-machine local settings)
 .claude/settings.local.json
