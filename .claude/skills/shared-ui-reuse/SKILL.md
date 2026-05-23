@@ -217,6 +217,34 @@ These patterns **look** like SharedUI under-use at first glance but are correct 
 
 Before flagging a `translatesAutoresizingMaskIntoConstraints = false` or an `NSLayoutConstraint.activate([...])` block: **look at the anchors in the block**. If any anchor matches an exception above, the explicit form is correct.
 
+## Color tokens — never use UIKit system colors directly
+
+**All background and fill colors in UIKit code must come from `CoreAsset.<token>.color`.** Never reference `.systemBackground`, `.secondarySystemBackground`, `.tertiarySystemBackground`, `.systemFill`, `.secondarySystemFill`, `.tertiarySystemFill`, `.quaternarySystemFill`, or any other `UIColor` system semantic. These colors ignore the project's palette and produce visually inconsistent results (e.g. a cold blue-gray card on a warm-cream background).
+
+### Token catalogue
+
+| Token | Accessor | Use when |
+|---|---|---|
+| Background | `CoreAsset.background.color` | Page / screen background. Views that fill the screen (`view`, `tableView`, `scrollView`). |
+| CardBackground | `CoreAsset.cardBackground.color` | Card surface sitting on top of the page background (cells, metric panels, floating containers). |
+| StatTrack | `CoreAsset.statTrack.color` | Track background for progress/stat bars. |
+| Text | `CoreAsset.text.color` | Primary body text. |
+| SecondaryText | `CoreAsset.secondaryText.color` | Labels, captions, and icons that should recede visually. |
+
+### Adding a new color token
+
+When a new UI color is needed that has no existing token:
+
+1. Create `Core/Resources/Assets.xcassets/<Name>.colorset/Contents.json` with light and dark variants tuned to the project palette (warm cream `#F5F1EB` / dark blue-gray `#1B1B22`). Do not copy iOS system color values — derive values that harmonize with the existing tokens.
+2. Run `tuist generate --no-open` so the synthesized `CoreAsset.<name>` accessor is available.
+3. Use `CoreAsset.<name>.color` at every call site.
+
+### Common failure modes
+
+- **`backgroundColor = .secondarySystemBackground`** → use `CoreAsset.cardBackground.color`.
+- **`backgroundColor = .quaternarySystemFill`** → use `CoreAsset.statTrack.color`.
+- **Any `UIColor.system*` or `UIColor.*SystemBackground`** → always map to a `CoreAsset` token instead.
+
 ## Non-goals
 
 This skill does not cover:

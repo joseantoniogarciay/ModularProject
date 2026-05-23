@@ -230,7 +230,7 @@ private extension PokemonDetailViewController {
 
     func makeMetricCard(title: String, value: String, icon: String) -> UIView {
         let card = UIView()
-        card.backgroundColor = .secondarySystemBackground
+        card.backgroundColor = CoreAsset.cardBackground.color
         card.layer.cornerRadius = 12
         card.layer.cornerCurve = .continuous
 
@@ -290,7 +290,7 @@ private extension PokemonDetailViewController {
         valueLabel.widthAnchor.constraint(equalToConstant: 30).isActive = true
 
         let trackView = UIView()
-        trackView.backgroundColor = .quaternarySystemFill
+        trackView.backgroundColor = CoreAsset.statTrack.color
         trackView.layer.cornerRadius = 3
         trackView.translatesAutoresizingMaskIntoConstraints = false
 

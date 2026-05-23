@@ -71,7 +71,7 @@ final class PokemonCell: UITableViewCell {
         selectionStyle = .none
 
         cardView.translatesAutoresizingMaskIntoConstraints = false
-        cardView.backgroundColor = .secondarySystemBackground
+        cardView.backgroundColor = CoreAsset.cardBackground.color
         cardView.layer.cornerRadius = 14
         cardView.layer.cornerCurve = .continuous
         cardView.layer.shadowColor = UIColor.black.cgColor
