@@ -203,6 +203,8 @@ If a non-feature module ever needs a UIKit helper, that is a signal the helper m
 - **Copying layout patterns verbatim between two features.** Fix: promote to a `SharedUI` helper before the second feature ships.
 - **Importing `SharedUI` and still writing raw constraints for cases listed in the helpers table above.** Fix: review the table; refactor.
 - **Adding a feature-specific helper to `SharedUI` because it "kind of fits".** Fix: keep it in the feature until a second use case shows up.
+- **Setting `contentView.backgroundColor` or `backgroundColor` on a `UITableViewCell` that has an accessory view (`accessoryType`, `accessoryView`).** The accessory area is outside `contentView` and rendered using the cell's `backgroundConfiguration`, which takes precedence over `backgroundColor` in iOS 14+. Correct approach: `var config = UIBackgroundConfiguration.listPlainCell(); config.backgroundColor = <color>; backgroundConfiguration = config`. This colors both `contentView` and the accessory area atomically.
+- **Setting `view.backgroundColor` on the view controller but not on the `UITableView`, `UIScrollView`, or `UICollectionView` that fills it.** These scrollable containers have their own independent `backgroundColor` (defaults to `.systemBackground`/white) that covers the controller's `view` entirely. Whenever you set a background color on a view controller's `view`, set the same color on every full-screen scrollable container inside it. Example: if `view.backgroundColor = CoreAsset.background.color`, also set `tableView.backgroundColor = CoreAsset.background.color` and `scrollView.backgroundColor = CoreAsset.background.color`.
 
 ## Not a violation (false positives to avoid)
 

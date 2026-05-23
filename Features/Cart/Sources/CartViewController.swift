@@ -54,7 +54,7 @@ public final class CartViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemGroupedBackground
+        view.backgroundColor = CoreAsset.background.color
         title = CoreStrings.cartScreenTitle
 
         let addButton = UIBarButtonItem(
@@ -84,6 +84,7 @@ public final class CartViewController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 72
+        tableView.backgroundColor = CoreAsset.background.color
         tableView.isHidden = true
 
         view.addSubview(tableView)
@@ -97,7 +98,7 @@ public final class CartViewController: UIViewController {
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
         emptyLabel.font = .preferredFont(forTextStyle: .body)
         emptyLabel.adjustsFontForContentSizeCategory = true
-        emptyLabel.textColor = .secondaryLabel
+        emptyLabel.textColor = CoreAsset.secondaryText.color
         emptyLabel.textAlignment = .center
         emptyLabel.numberOfLines = 0
         emptyLabel.text = CoreStrings.cartEmpty

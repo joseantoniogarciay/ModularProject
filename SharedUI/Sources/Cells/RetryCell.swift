@@ -35,7 +35,7 @@ public final class RetryCell: UITableViewCell {
 
         messageLabel.font = .preferredFont(forTextStyle: .footnote)
         messageLabel.adjustsFontForContentSizeCategory = true
-        messageLabel.textColor = .secondaryLabel
+        messageLabel.textColor = SharedUIAsset.secondaryText.color
         messageLabel.textAlignment = .center
         messageLabel.numberOfLines = 0
 

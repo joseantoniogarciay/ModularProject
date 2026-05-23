@@ -29,7 +29,7 @@ final class LoggedOutViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = CoreAsset.background.color
         configureViews()
     }
 
@@ -42,7 +42,7 @@ final class LoggedOutViewController: UIViewController {
         subtitleLabel.text = CoreStrings.accountLoggedOutSubtitle
         subtitleLabel.font = .preferredFont(forTextStyle: .body)
         subtitleLabel.adjustsFontForContentSizeCategory = true
-        subtitleLabel.textColor = .secondaryLabel
+        subtitleLabel.textColor = CoreAsset.secondaryText.color
         subtitleLabel.textAlignment = .center
         subtitleLabel.numberOfLines = 0
 

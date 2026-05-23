@@ -13,21 +13,25 @@ public final class PokemonCoordinator: Coordinator {
     private let navigationController: UINavigationController
     private let repository: any PokemonRepository
     private let imageLoader: any ImageLoader
+    private let themeStore: any ThemeStore
 
     public init(
         navigationController: UINavigationController,
         repository: any PokemonRepository,
-        imageLoader: any ImageLoader
+        imageLoader: any ImageLoader,
+        themeStore: any ThemeStore
     ) {
         self.navigationController = navigationController
         self.repository = repository
         self.imageLoader = imageLoader
+        self.themeStore = themeStore
     }
 
     public func start() {
         let listVC = PokemonListViewController(
             repository: repository,
             imageLoader: imageLoader,
+            themeStore: themeStore,
             onSelect: { [weak self] pokemon in
                 self?.showDetail(for: pokemon)
             }

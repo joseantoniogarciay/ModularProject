@@ -61,6 +61,8 @@ xcodebuild -workspace ModularProject.xcworkspace -scheme App \
   -destination 'generic/platform=iOS Simulator' build
 ```
 
+**After any non-trivial code change, always verify the build** using the `xcodebuild` command above before considering the task done. SourceKit diagnostics shown in the editor are unreliable in this workspace (false "No such module" errors are common); the compiler is the source of truth. Run `tuist generate --no-open` first whenever `Project.swift`, resource folders, or `Tuist/` files changed.
+
 ## Code conventions
 
 - Commit messages in English.
@@ -70,4 +72,5 @@ xcodebuild -workspace ModularProject.xcworkspace -scheme App \
 - Prefer `actor` for shared mutable state over locks/queues.
 - Do not use `@unchecked Sendable` or `nonisolated(unsafe)` without a documented invariant and a removal plan.
 - Asset access: always use the Tuist-synthesized accessor (`CoreAsset.background.color`, `CoreAsset.logo.image`, etc.), never `UIColor(named:)`, `UIColor(resource:)` or any other stringly-typed/Xcode-generated alternative. Xcode auto-emits its own `ColorResource` / `ImageResource` symbols in DerivedData but they are `internal` to the module and not usable across modules — Tuist's accessor is the only public, cross-module-safe path.
+- **`Core` has no implicit Foundation import.** Any Core file that uses Foundation types (`UserDefaults`, `URL`, `Data`, `UUID`, `Date`, `Codable`, …) must begin with `import Foundation`. Forgetting it produces a "cannot find type/symbol in scope" compiler error isolated to that file.
 - Localized strings: format is **`.strings` legacy** (`<Module>/Resources/<locale>.lproj/Localizable.strings`), not `.xcstrings`. Reason: Tuist's resource synthesizer generates a public `<Module>Strings` enum for `.strings` files (e.g. `CoreStrings.welcomeTitle`) but does not synthesize for `.xcstrings`, and Xcode's native string symbol generation is `internal`-only — so `.xcstrings` would break cross-module access. Always access strings via `<Module>Strings.<key>`. Never `NSLocalizedString`, never `String(localized:)`. Supported locales: `en` (development region) and `es`.

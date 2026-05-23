@@ -11,6 +11,7 @@ struct AppDependencies {
     let authSession: any AuthSession
     let cartRepository: any CartRepository
     let productsRepository: any ProductsRepository
+    let themeStore: any ThemeStore
 
     static func live(configuration: AppConfiguration = .live()) -> AppDependencies {
         let userAgent = defaultUserAgent()
@@ -59,7 +60,8 @@ struct AppDependencies {
             imageLoader: KingfisherImageLoader(),
             authSession: authSession,
             cartRepository: cartRepository,
-            productsRepository: productsRepository
+            productsRepository: productsRepository,
+            themeStore: UserDefaultsThemeStore()
         )
     }
 

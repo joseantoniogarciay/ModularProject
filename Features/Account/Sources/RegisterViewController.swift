@@ -27,7 +27,7 @@ final class RegisterViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = CoreAsset.background.color
         title = CoreStrings.accountRegisterScreenTitle
         configureViews()
     }

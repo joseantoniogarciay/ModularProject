@@ -26,13 +26,13 @@ public final class RetryView: UIView {
     }
 
     private func setupViews() {
-        backgroundColor = .systemBackground
+        backgroundColor = SharedUIAsset.background.color
 
         messageLabel.numberOfLines = 0
         messageLabel.textAlignment = .center
         messageLabel.font = .preferredFont(forTextStyle: .body)
         messageLabel.adjustsFontForContentSizeCategory = true
-        messageLabel.textColor = .secondaryLabel
+        messageLabel.textColor = SharedUIAsset.secondaryText.color
 
         retryButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
         retryButton.titleLabel?.adjustsFontForContentSizeCategory = true

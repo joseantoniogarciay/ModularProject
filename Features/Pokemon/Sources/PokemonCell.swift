@@ -39,9 +39,12 @@ final class PokemonCell: UITableViewCell {
 
     private func setupViews() {
         accessoryType = .disclosureIndicator
+        var config = UIBackgroundConfiguration.listPlainCell()
+        config.backgroundColor = CoreAsset.background.color
+        backgroundConfiguration = config
 
         spriteImageView.contentMode = .scaleAspectFit
-        spriteImageView.tintColor = .secondaryLabel
+        spriteImageView.tintColor = CoreAsset.secondaryText.color
         spriteImageView.pinSize(60)
 
         nameLabel.translatesAutoresizingMaskIntoConstraints = false

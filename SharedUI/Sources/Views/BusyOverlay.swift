@@ -26,7 +26,7 @@ public final class BusyOverlay: UIView {
     }
 
     private func setupViews() {
-        backgroundColor = UIColor.systemBackground.withAlphaComponent(0.7)
+        backgroundColor = SharedUIAsset.background.color.withAlphaComponent(0.7)
         isUserInteractionEnabled = true
 
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false

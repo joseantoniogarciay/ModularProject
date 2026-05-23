@@ -43,21 +43,21 @@ public struct BannerStyle {
     }
 
     public static let info = BannerStyle(
-        backgroundColor: .secondarySystemBackground,
-        foregroundColor: .label,
-        secondaryForegroundColor: .secondaryLabel
+        backgroundColor: SharedUIAsset.bannerInfoBackground.color,
+        foregroundColor: SharedUIAsset.text.color,
+        secondaryForegroundColor: SharedUIAsset.secondaryText.color
     )
 
     public static let warning = BannerStyle(
-        backgroundColor: .systemYellow,
-        foregroundColor: .black,
-        secondaryForegroundColor: UIColor.black.withAlphaComponent(0.7)
+        backgroundColor: SharedUIAsset.bannerWarningBackground.color,
+        foregroundColor: SharedUIAsset.bannerWarningForeground.color,
+        secondaryForegroundColor: SharedUIAsset.bannerWarningForeground.color.withAlphaComponent(0.7)
     )
 
     public static let error = BannerStyle(
-        backgroundColor: .systemRed,
-        foregroundColor: .white,
-        secondaryForegroundColor: UIColor.white.withAlphaComponent(0.85)
+        backgroundColor: SharedUIAsset.bannerErrorBackground.color,
+        foregroundColor: SharedUIAsset.bannerErrorForeground.color,
+        secondaryForegroundColor: SharedUIAsset.bannerErrorForeground.color.withAlphaComponent(0.75)
     )
 }
 
@@ -116,10 +116,14 @@ public final class BannerView: UIView {
     private func setupViews() {
         backgroundColor = .clear
 
-        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowColor = UIColor.label.resolvedColor(with: traitCollection).cgColor
         layer.shadowOpacity = 0.18
         layer.shadowOffset = CGSize(width: 0, height: 4)
         layer.shadowRadius = 12
+
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: BannerView, _) in
+            self.layer.shadowColor = UIColor.label.resolvedColor(with: self.traitCollection).cgColor
+        }
 
         cardView.translatesAutoresizingMaskIntoConstraints = false
         cardView.layer.cornerRadius = 16

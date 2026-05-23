@@ -42,7 +42,7 @@ public final class PokemonDetailViewController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = CoreAsset.background.color
         title = pokemon.name.capitalized
         setupUI()
         showInitial()
@@ -50,6 +50,7 @@ public final class PokemonDetailViewController: UIViewController {
     }
 
     private func setupUI() {
+        scrollView.backgroundColor = CoreAsset.background.color
         view.addSubview(scrollView)
         scrollView.pinEdges(to: view)
 
@@ -63,7 +64,7 @@ public final class PokemonDetailViewController: UIViewController {
         stackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor).isActive = true
 
         spriteImageView.contentMode = .scaleAspectFit
-        spriteImageView.tintColor = .secondaryLabel
+        spriteImageView.tintColor = CoreAsset.secondaryText.color
         spriteImageView.translatesAutoresizingMaskIntoConstraints = false
         spriteImageView.heightAnchor.constraint(equalToConstant: 220).isActive = true
         stackView.addArrangedSubview(spriteImageView)
@@ -190,7 +191,7 @@ public final class PokemonDetailViewController: UIViewController {
         valueLabel.text = "\(stat.baseValue)"
         valueLabel.font = .preferredFont(forTextStyle: .body)
         valueLabel.adjustsFontForContentSizeCategory = true
-        valueLabel.textColor = .secondaryLabel
+        valueLabel.textColor = CoreAsset.secondaryText.color
 
         row.addArrangedSubview(nameLabel)
         row.addArrangedSubview(valueLabel)

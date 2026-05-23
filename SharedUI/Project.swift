@@ -2,5 +2,6 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 
 let project = Project.framework(
-    name: "SharedUI"
+    name: "SharedUI",
+    resources: ["Resources/**"]
 )

@@ -1,3 +1,4 @@
+import Core
 import UIKit
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -13,11 +14,24 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
         self.window = window
 
+        let dependencies = AppDependencies.live()
+        window.overrideUserInterfaceStyle = dependencies.themeStore.current.uiStyle
+
         let coordinator = AppRootCoordinator(
             window: window,
-            dependencies: AppDependencies.live()
+            dependencies: dependencies
         )
         rootCoordinator = coordinator
         coordinator.start()
+    }
+}
+
+private extension ThemePreference {
+    var uiStyle: UIUserInterfaceStyle {
+        switch self {
+        case .system: return .unspecified
+        case .light: return .light
+        case .dark: return .dark
+        }
     }
 }

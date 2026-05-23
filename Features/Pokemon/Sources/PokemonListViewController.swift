@@ -6,11 +6,13 @@ import UIKit
 public final class PokemonListViewController: UIViewController {
     private let repository: any PokemonRepository
     private let imageLoader: any ImageLoader
+    private let themeStore: any ThemeStore
     private let onSelect: @MainActor (Pokemon) -> Void
     private let pageSize: Int
 
     private let tableView = UITableView(frame: .zero, style: .plain)
     private let retryView = RetryView()
+    private var themeBarButton: UIBarButtonItem?
     private var pokemons: [Pokemon] = []
     private var offset: Int = 0
     private var hasMore: Bool = true
@@ -25,11 +27,13 @@ public final class PokemonListViewController: UIViewController {
     public init(
         repository: any PokemonRepository,
         imageLoader: any ImageLoader,
+        themeStore: any ThemeStore,
         pageSize: Int = 30,
         onSelect: @escaping @MainActor (Pokemon) -> Void
     ) {
         self.repository = repository
         self.imageLoader = imageLoader
+        self.themeStore = themeStore
         self.pageSize = pageSize
         self.onSelect = onSelect
         super.init(nibName: nil, bundle: nil)
@@ -51,8 +55,17 @@ public final class PokemonListViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = CoreAsset.background.color
         title = CoreStrings.pokemonTitle
+
+        let themeButton = UIBarButtonItem(
+            image: UIImage(systemName: themeStore.current.systemImageName),
+            style: .plain,
+            target: self,
+            action: #selector(themeButtonTapped)
+        )
+        navigationItem.rightBarButtonItem = themeButton
+        themeBarButton = themeButton
 
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(PokemonCell.self, forCellReuseIdentifier: PokemonCell.reuseID)
@@ -62,6 +75,7 @@ public final class PokemonListViewController: UIViewController {
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 72
+        tableView.backgroundColor = CoreAsset.background.color
 
         view.addSubview(tableView)
         tableView.pinEdges(to: view)
@@ -202,6 +216,33 @@ extension PokemonListViewController: RetryViewDelegate {
     }
 }
 
+extension PokemonListViewController {
+    @objc private func themeButtonTapped() {
+        let next = themeStore.current.next
+        themeStore.set(next)
+        themeBarButton?.image = UIImage(systemName: next.systemImageName)
+        view.window?.overrideUserInterfaceStyle = next.uiStyle
+    }
+}
+
+private extension ThemePreference {
+    var systemImageName: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.fill"
+        }
+    }
+
+    var uiStyle: UIUserInterfaceStyle {
+        switch self {
+        case .system: return .unspecified
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
 #if DEBUG
 import SwiftUI
 
@@ -210,6 +251,7 @@ import SwiftUI
         rootViewController: PokemonListViewController(
             repository: PreviewPokemonRepository(),
             imageLoader: PreviewImageLoader(),
+            themeStore: UserDefaultsThemeStore(),
             onSelect: { _ in }
         )
     )
