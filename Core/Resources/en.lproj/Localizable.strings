@@ -18,6 +18,10 @@
 "account_register_screen_title" = "Create account";
 "account_register_subtitle" = "Fill in your details to get started.";
 "account_logout_button" = "Log out";
+"account_logout_confirm_title" = "Log out?";
+"account_logout_confirm_message" = "You'll need to log in again to access your account.";
+"account_logout_confirm_button" = "Log out";
+"account_cancel_button" = "Cancel";
 "account_greeting_format" = "Hello, %@";
 "account_profile_email_format" = "Email: %@";
 "account_profile_role_format" = "Role: %@";

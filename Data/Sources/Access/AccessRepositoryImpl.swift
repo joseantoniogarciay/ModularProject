@@ -38,7 +38,7 @@ public struct AccessRepositoryImpl: AccessRepository {
             return LoginResult(user: response.data.user.toDomain(), tokens: tokens)
         } catch let error as NetError {
             if case .noConnection = error { throw .noConnection }
-            if case let .http(status, _, _) = error, status == 401 || status == 400 {
+            if case let .http(status, _, _) = error, status == 401 || status == 400 || status == 404 {
                 throw .invalidCredentials
             }
             throw .unknown(error)

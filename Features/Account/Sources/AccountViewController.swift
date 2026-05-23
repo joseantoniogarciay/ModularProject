@@ -97,6 +97,23 @@ final class AccountViewController: UIViewController {
     }
 
     @objc private func logoutTapped() {
+        let dialog = ConfirmationDialogViewController(
+            payload: ConfirmationDialogPayload(
+                iconSystemName: "rectangle.portrait.and.arrow.right",
+                iconTintColor: .systemRed,
+                title: CoreStrings.accountLogoutConfirmTitle,
+                message: CoreStrings.accountLogoutConfirmMessage,
+                confirm: ConfirmationDialogAction(
+                    title: CoreStrings.accountLogoutConfirmButton,
+                    handler: { [weak self] in self?.performLogout() }
+                ),
+                cancel: ConfirmationDialogAction(title: CoreStrings.accountCancelButton)
+            )
+        )
+        present(dialog, animated: true)
+    }
+
+    private func performLogout() {
         spinner.startAnimating()
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
         Task { [session] in
@@ -115,16 +132,35 @@ final class AccountViewController: UIViewController {
     }
 
     private func swap(in child: UIViewController) {
-        if let currentChild {
-            currentChild.willMove(toParent: nil)
-            currentChild.view.removeFromSuperview()
-            currentChild.removeFromParent()
-        }
+        let outgoing = currentChild
         addChild(child)
         child.view.frame = view.bounds
         view.addSubview(child.view)
         child.view.pinEdges(to: view)
-        child.didMove(toParent: self)
+
+        guard let outgoing else {
+            child.didMove(toParent: self)
+            currentChild = child
+            return
+        }
+
+        outgoing.willMove(toParent: nil)
+        child.view.alpha = 0
         currentChild = child
+
+        UIView.animate(
+            withDuration: 0.25,
+            delay: 0,
+            options: [.allowUserInteraction],
+            animations: {
+                child.view.alpha = 1
+                outgoing.view.alpha = 0
+            },
+            completion: { _ in
+                outgoing.view.removeFromSuperview()
+                outgoing.removeFromParent()
+                child.didMove(toParent: self)
+            }
+        )
     }
 }
