@@ -29,7 +29,6 @@ final class RegisterViewController: UIViewController {
         validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
     )
     private let registerButton = PrimaryButton()
-    private let busyOverlay = BusyOverlay()
 
     init(session: any AuthSession, onSuccess: @escaping () -> Void) {
         self.session = session
@@ -161,7 +160,7 @@ final class RegisterViewController: UIViewController {
         let navigationBar = navigationController?.navigationBar
         let popGesture = navigationController?.interactivePopGestureRecognizer
         defer {
-            busyOverlay.hide()
+            registerButton.isLoading = false
             tabBar?.isUserInteractionEnabled = true
             navigationBar?.isUserInteractionEnabled = true
             popGesture?.isEnabled = true
@@ -176,7 +175,7 @@ final class RegisterViewController: UIViewController {
 
     private func enterBusy() {
         view.endEditing(true)
-        busyOverlay.show(in: view)
+        registerButton.isLoading = true
         tabBarController?.tabBar.isUserInteractionEnabled = false
         navigationController?.navigationBar.isUserInteractionEnabled = false
         navigationController?.interactivePopGestureRecognizer?.isEnabled = false

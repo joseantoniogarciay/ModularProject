@@ -23,7 +23,6 @@ final class LoggedOutViewController: UIViewController {
     )
     private let loginButton = PrimaryButton()
     private let registerButton = TextLinkButton()
-    private let busyOverlay = BusyOverlay()
 
     init(session: any AuthSession, navigator: (any AccountNavigator)?) {
         self.session = session
@@ -153,7 +152,7 @@ final class LoggedOutViewController: UIViewController {
     private func performLogin(identifier: String, password: String) async {
         let tabBar = tabBarController?.tabBar
         defer {
-            busyOverlay.hide()
+            loginButton.isLoading = false
             tabBar?.isUserInteractionEnabled = true
         }
         do {
@@ -169,7 +168,7 @@ final class LoggedOutViewController: UIViewController {
 
     private func enterBusy() {
         view.endEditing(true)
-        busyOverlay.show(in: view)
+        loginButton.isLoading = true
         tabBarController?.tabBar.isUserInteractionEnabled = false
     }
 
