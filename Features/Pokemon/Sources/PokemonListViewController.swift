@@ -74,7 +74,8 @@ public final class PokemonListViewController: UIViewController {
         tableView.dataSource = self
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
-        tableView.estimatedRowHeight = 72
+        tableView.estimatedRowHeight = 108
+        tableView.separatorStyle = .none
         tableView.backgroundColor = CoreAsset.background.color
 
         view.addSubview(tableView)
