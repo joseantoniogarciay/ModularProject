@@ -10,6 +10,9 @@ final class RegisterViewController: UIViewController {
     private let scrollView = KeyboardAvoidingScrollView()
     private let contentView = UIView()
 
+    private let logoView = UIImageView()
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
     private let usernameField = ValidatedTextField(
         placeholder: CoreStrings.accountUsernamePlaceholder,
         validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
@@ -25,8 +28,7 @@ final class RegisterViewController: UIViewController {
         placeholder: CoreStrings.accountPasswordPlaceholder,
         validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
     )
-    private let registerButton = UIButton(type: .system)
-    private let errorLabel = UILabel()
+    private let registerButton = PrimaryButton()
     private let busyOverlay = BusyOverlay()
 
     init(session: any AuthSession, onSuccess: @escaping () -> Void) {
@@ -43,11 +45,28 @@ final class RegisterViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = SharedUIAsset.background.color
-        title = CoreStrings.accountRegisterScreenTitle
+        scrollView.backgroundColor = SharedUIAsset.background.color
         configureViews()
     }
 
     private func configureViews() {
+        logoView.image = SharedUIAsset.logo.image
+        logoView.contentMode = .scaleAspectFit
+        logoView.translatesAutoresizingMaskIntoConstraints = false
+
+        titleLabel.text = CoreStrings.accountRegisterScreenTitle
+        titleLabel.font = .preferredFont(forTextStyle: .largeTitle)
+        titleLabel.adjustsFontForContentSizeCategory = true
+        titleLabel.textColor = SharedUIAsset.text.color
+        titleLabel.textAlignment = .center
+
+        subtitleLabel.text = CoreStrings.accountRegisterSubtitle
+        subtitleLabel.font = .preferredFont(forTextStyle: .subheadline)
+        subtitleLabel.adjustsFontForContentSizeCategory = true
+        subtitleLabel.textColor = SharedUIAsset.secondaryText.color
+        subtitleLabel.textAlignment = .center
+        subtitleLabel.numberOfLines = 0
+
         usernameField.textField.textContentType = .username
         usernameField.textField.autocapitalizationType = .none
         usernameField.textField.autocorrectionType = .no
@@ -67,31 +86,36 @@ final class RegisterViewController: UIViewController {
         passwordField.textField.delegate = self
 
         registerButton.setTitle(CoreStrings.accountRegisterButton, for: .normal)
-        registerButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        registerButton.titleLabel?.adjustsFontForContentSizeCategory = true
         registerButton.addTarget(self, action: #selector(registerTapped), for: .touchUpInside)
 
-        errorLabel.font = .preferredFont(forTextStyle: .footnote)
-        errorLabel.adjustsFontForContentSizeCategory = true
-        errorLabel.textColor = .systemRed
-        errorLabel.numberOfLines = 0
-        errorLabel.textAlignment = .center
-        errorLabel.isHidden = true
+        let headerStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        headerStack.axis = .vertical
+        headerStack.spacing = 8
+        headerStack.alignment = .center
 
-        let stack = UIStackView(arrangedSubviews: [
-            usernameField,
-            emailField,
-            passwordField,
-            registerButton,
-            errorLabel,
-        ])
-        stack.axis = .vertical
-        stack.spacing = 16
-        stack.alignment = .fill
-        stack.translatesAutoresizingMaskIntoConstraints = false
+        let fieldStack = UIStackView(arrangedSubviews: [usernameField, emailField, passwordField])
+        fieldStack.axis = .vertical
+        fieldStack.spacing = 8
+        fieldStack.alignment = .fill
 
+        let actionStack = UIStackView(arrangedSubviews: [registerButton])
+        actionStack.axis = .vertical
+        actionStack.alignment = .fill
+
+        let mainStack = UIStackView(arrangedSubviews: [headerStack, fieldStack, actionStack])
+        mainStack.axis = .vertical
+        mainStack.alignment = .fill
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        mainStack.setCustomSpacing(32, after: headerStack)
+        mainStack.setCustomSpacing(24, after: fieldStack)
+
+        configureLayout(logo: logoView, stack: mainStack)
+    }
+
+    private func configureLayout(logo: UIImageView, stack: UIStackView) {
         contentView.translatesAutoresizingMaskIntoConstraints = false
         contentView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 24, bottom: 0, trailing: 24)
+        contentView.addSubview(logo)
         contentView.addSubview(stack)
 
         view.addSubview(scrollView)
@@ -104,11 +128,17 @@ final class RegisterViewController: UIViewController {
             contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
             contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.safeAreaLayoutGuide.heightAnchor),
 
-            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            logo.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            logo.widthAnchor.constraint(equalToConstant: 64),
+            logo.heightAnchor.constraint(equalToConstant: 64),
+            logo.bottomAnchor.constraint(equalTo: stack.topAnchor, constant: -40),
+
+            stack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: 40),
             stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -24),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -40),
         ])
     }
 
@@ -145,7 +175,6 @@ final class RegisterViewController: UIViewController {
     }
 
     private func enterBusy() {
-        errorLabel.isHidden = true
         view.endEditing(true)
         busyOverlay.show(in: view)
         tabBarController?.tabBar.isUserInteractionEnabled = false
@@ -154,8 +183,7 @@ final class RegisterViewController: UIViewController {
     }
 
     private func showError(_ text: String) {
-        errorLabel.text = text
-        errorLabel.isHidden = false
+        BannerCenter.shared.show(BannerPayload(message: text, style: .error))
     }
 
     private func message(for error: SignUpError) -> String {

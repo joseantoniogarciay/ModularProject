@@ -62,6 +62,7 @@ final class AccountViewController: UIViewController {
         case .anonymous(let reason):
             let loggedOut = LoggedOutViewController(session: session, navigator: navigator)
             swap(in: loggedOut)
+            view.layoutIfNeeded()
             navigationController?.popToRootViewController(animated: true)
             presentBanner(for: reason)
         case .authenticated(let user):

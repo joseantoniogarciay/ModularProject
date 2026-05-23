@@ -231,31 +231,82 @@ This rule applies to every `UIScrollView` content container in features, regardl
 
 ## Color tokens — never use UIKit system colors directly
 
-**All background and fill colors in UIKit code must come from `CoreAsset.<token>.color`.** Never reference `.systemBackground`, `.secondarySystemBackground`, `.tertiarySystemBackground`, `.systemFill`, `.secondarySystemFill`, `.tertiarySystemFill`, `.quaternarySystemFill`, or any other `UIColor` system semantic. These colors ignore the project's palette and produce visually inconsistent results (e.g. a cold blue-gray card on a warm-cream background).
+**All background and fill colors in UIKit code must come from `SharedUIAsset.<token>.color`.** Never reference `.systemBackground`, `.secondarySystemBackground`, `.tertiarySystemBackground`, `.systemFill`, `.secondarySystemFill`, `.tertiarySystemFill`, `.quaternarySystemFill`, or any other `UIColor` system semantic. These colors ignore the project's palette and produce visually inconsistent results (e.g. a cold blue-gray card on a warm-cream background).
+
+All color tokens live in `SharedUI/Resources/Assets.xcassets/` and are synthesized as `SharedUIAsset.<name>`. `Core` has no color assets.
 
 ### Token catalogue
 
 | Token | Accessor | Use when |
 |---|---|---|
-| Background | `CoreAsset.background.color` | Page / screen background. Views that fill the screen (`view`, `tableView`, `scrollView`). |
-| CardBackground | `CoreAsset.cardBackground.color` | Card surface sitting on top of the page background (cells, metric panels, floating containers). |
-| StatTrack | `CoreAsset.statTrack.color` | Track background for progress/stat bars. |
-| Text | `CoreAsset.text.color` | Primary body text. |
-| SecondaryText | `CoreAsset.secondaryText.color` | Labels, captions, and icons that should recede visually. |
+| Background | `SharedUIAsset.background.color` | Page / screen background. Views that fill the screen (`view`, `tableView`, `scrollView`). |
+| CardBackground | `SharedUIAsset.cardBackground.color` | Card surface sitting on top of the page background (cells, metric panels, floating containers). |
+| StatTrack | `SharedUIAsset.statTrack.color` | Track background for progress/stat bars. |
+| Text | `SharedUIAsset.text.color` | Primary body text. |
+| SecondaryText | `SharedUIAsset.secondaryText.color` | Labels, captions, and icons that should recede visually. |
 
 ### Adding a new color token
 
 When a new UI color is needed that has no existing token:
 
-1. Create `Core/Resources/Assets.xcassets/<Name>.colorset/Contents.json` with light and dark variants tuned to the project palette (warm cream `#F5F1EB` / dark blue-gray `#1B1B22`). Do not copy iOS system color values — derive values that harmonize with the existing tokens.
-2. Run `tuist generate --no-open` so the synthesized `CoreAsset.<name>` accessor is available.
-3. Use `CoreAsset.<name>.color` at every call site.
+1. Create `SharedUI/Resources/Assets.xcassets/<Name>.colorset/Contents.json` with light and dark variants tuned to the project palette (warm cream `#F5F1EB` / dark blue-gray `#1B1B22`). Do not copy iOS system color values — derive values that harmonize with the existing tokens.
+2. Run `tuist generate --no-open` so the synthesized `SharedUIAsset.<name>` accessor is available.
+3. Use `SharedUIAsset.<name>.color` at every call site.
 
 ### Common failure modes
 
-- **`backgroundColor = .secondarySystemBackground`** → use `CoreAsset.cardBackground.color`.
-- **`backgroundColor = .quaternarySystemFill`** → use `CoreAsset.statTrack.color`.
-- **Any `UIColor.system*` or `UIColor.*SystemBackground`** → always map to a `CoreAsset` token instead.
+- **`backgroundColor = .secondarySystemBackground`** → use `SharedUIAsset.cardBackground.color`.
+- **`backgroundColor = .quaternarySystemFill`** → use `SharedUIAsset.statTrack.color`.
+- **Any `UIColor.system*` or `UIColor.*SystemBackground`** → always map to a `SharedUIAsset` token instead.
+- **`CoreAsset.<token>.color`** → wrong module; tokens are in `SharedUI`, not `Core`.
+
+## Card style — consistent visual treatment for all card views
+
+Any `UIView` that acts as a card (a rounded container elevated above the background) must use the canonical card style. The reference implementation is `PokemonCell` and `LoggedInViewController`.
+
+### Required properties
+
+```swift
+card.backgroundColor = SharedUIAsset.cardBackground.color
+card.layer.cornerRadius = 14
+card.layer.cornerCurve = .continuous
+card.layer.shadowColor = UIColor.black.cgColor
+card.layer.shadowRadius = 10
+card.layer.shadowOffset = CGSize(width: 0, height: 3)
+```
+
+### Dark mode handling
+
+Shadow is invisible in dark mode and a subtle border replaces it. Wire this via `updateCardAppearance()` called once in `viewDidLoad` (or after the card is created) and again on every trait change:
+
+```swift
+private func updateCardAppearance() {
+    if traitCollection.userInterfaceStyle == .dark {
+        card.layer.shadowOpacity = 0
+        card.layer.borderWidth = 0.5
+        card.layer.borderColor = UIColor(white: 1.0, alpha: 0.14).cgColor
+    } else {
+        card.layer.shadowOpacity = 0.09
+        card.layer.borderWidth = 0
+    }
+}
+```
+
+Register for trait changes in `viewDidLoad`:
+
+```swift
+registerForTraitChanges([UITraitUserInterfaceStyle.self]) { [weak self] (_: MyViewController, _: UITraitCollection) in
+    self?.updateCardAppearance()
+}
+```
+
+If cards are created dynamically (e.g. from a factory method called on each data load), call `updateCardAppearance()` again immediately after populating them — the trait-change registration fires only on future system changes, not retroactively.
+
+### Anti-patterns
+
+- **`cornerRadius = 12`** — always use 14 for cards.
+- **Omitting `shadowColor / shadowRadius / shadowOffset`** — without these, `shadowOpacity` has no effect.
+- **No dark mode handling** — a white card in dark mode with a visible shadow is a bug, not a style choice.
 
 ## Non-goals
 
@@ -263,6 +314,6 @@ This skill does not cover:
 
 - General UIKit-only-no-storyboard style (see `CLAUDE.md` → "Stack & non-negotiable rules").
 - Static linking, Tuist generation, or module boundaries beyond SharedUI (see `CLAUDE.md`).
-- Asset access via `CoreAsset` / per-module synthesized accessors (see `CLAUDE.md` → "Code conventions").
+- Asset access via synthesized accessors (see `CLAUDE.md` → "Code conventions").
 - Localized strings via `<Module>Strings` (see `CLAUDE.md` → "Code conventions").
 - Concurrency annotations on UIKit types — covered by the existing concurrency skill.

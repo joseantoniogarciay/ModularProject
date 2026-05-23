@@ -12,11 +12,11 @@ final class LoggedInViewController: UIViewController {
     private let contentView = UIView()
 
     private let greetingLabel = UILabel()
-    private let emailLabel = UILabel()
-    private let roleLabel = UILabel()
-    private let idLabel = UILabel()
-    private let cartButton = UIButton(type: .system)
-    private let logoutButton = UIButton(type: .system)
+    private let emailValueLabel = UILabel()
+    private let roleValueLabel = UILabel()
+    private let idValueLabel = UILabel()
+    private let cardView = UIView()
+    private let cartButton = PrimaryButton()
     private let spinner = UIActivityIndicatorView(style: .medium)
 
     init(session: any AuthSession, user: User, navigator: (any AccountNavigator)?) {
@@ -41,6 +41,10 @@ final class LoggedInViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = SharedUIAsset.background.color
         configureViews()
+        updateCardAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { [weak self] (_: LoggedInViewController, _: UITraitCollection) in
+            self?.updateCardAppearance()
+        }
         bind(to: user)
         Task { [session] in
             do {
@@ -52,50 +56,57 @@ final class LoggedInViewController: UIViewController {
     }
 
     private func configureViews() {
-        greetingLabel.font = .preferredFont(forTextStyle: .title1)
+        let logoutItem = UIBarButtonItem(
+            image: UIImage(systemName: "rectangle.portrait.and.arrow.right"),
+            style: .plain,
+            target: self,
+            action: #selector(logoutTapped)
+        )
+        logoutItem.tintColor = .systemRed
+        navigationItem.rightBarButtonItem = logoutItem
+
+        greetingLabel.font = .preferredFont(forTextStyle: .largeTitle)
         greetingLabel.adjustsFontForContentSizeCategory = true
+        greetingLabel.textColor = SharedUIAsset.text.color
         greetingLabel.numberOfLines = 0
 
-        for label in [emailLabel, roleLabel, idLabel] {
-            label.font = .preferredFont(forTextStyle: .body)
-            label.adjustsFontForContentSizeCategory = true
-            label.textColor = SharedUIAsset.secondaryText.color
-            label.numberOfLines = 0
-        }
+        cardView.backgroundColor = SharedUIAsset.cardBackground.color
+        cardView.layer.cornerRadius = 14
+        cardView.layer.cornerCurve = .continuous
+        cardView.layer.shadowColor = UIColor.black.cgColor
+        cardView.layer.shadowRadius = 10
+        cardView.layer.shadowOffset = CGSize(width: 0, height: 3)
+        cardView.translatesAutoresizingMaskIntoConstraints = false
+
+        let cardStack = UIStackView(arrangedSubviews: [
+            makeInfoRow(label: CoreStrings.accountProfileEmailLabel, valueLabel: emailValueLabel),
+            makeSeparator(),
+            makeInfoRow(label: CoreStrings.accountProfileRoleLabel, valueLabel: roleValueLabel),
+            makeSeparator(),
+            makeInfoRow(label: CoreStrings.accountProfileIdLabel, valueLabel: idValueLabel),
+        ])
+        cardStack.axis = .vertical
+        cardStack.spacing = 12
+        cardStack.translatesAutoresizingMaskIntoConstraints = false
+        cardView.addSubview(cardStack)
 
         cartButton.setTitle(CoreStrings.accountCartButton, for: .normal)
-        cartButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        cartButton.titleLabel?.adjustsFontForContentSizeCategory = true
         cartButton.addTarget(self, action: #selector(cartTapped), for: .touchUpInside)
-
-        logoutButton.setTitle(CoreStrings.accountLogoutButton, for: .normal)
-        logoutButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
-        logoutButton.titleLabel?.adjustsFontForContentSizeCategory = true
-        logoutButton.tintColor = .systemRed
-        logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
 
         spinner.hidesWhenStopped = true
 
-        let stack = UIStackView(arrangedSubviews: [
-            greetingLabel,
-            emailLabel,
-            roleLabel,
-            idLabel,
-            cartButton,
-            logoutButton,
-            spinner,
-        ])
-        stack.axis = .vertical
-        stack.spacing = 12
-        stack.alignment = .leading
-        stack.translatesAutoresizingMaskIntoConstraints = false
+        let mainStack = UIStackView(arrangedSubviews: [greetingLabel, cardView, cartButton])
+        mainStack.axis = .vertical
+        mainStack.alignment = .fill
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        mainStack.setCustomSpacing(24, after: greetingLabel)
+        mainStack.setCustomSpacing(32, after: cardView)
 
         contentView.translatesAutoresizingMaskIntoConstraints = false
         contentView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 24, bottom: 0, trailing: 24)
-        contentView.addSubview(stack)
+        contentView.addSubview(mainStack)
 
         scrollView.translatesAutoresizingMaskIntoConstraints = false
-
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
 
@@ -111,18 +122,60 @@ final class LoggedInViewController: UIViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
 
-            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
-            stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -24),
+            mainStack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 32),
+            mainStack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            mainStack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            mainStack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -32),
+
+            cardStack.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 16),
+            cardStack.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 16),
+            cardStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
+            cardStack.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -16),
         ])
+    }
+
+    private func makeInfoRow(label: String, valueLabel: UILabel) -> UIStackView {
+        let captionLabel = UILabel()
+        captionLabel.text = label
+        captionLabel.font = .preferredFont(forTextStyle: .caption1)
+        captionLabel.adjustsFontForContentSizeCategory = true
+        captionLabel.textColor = SharedUIAsset.secondaryText.color
+
+        valueLabel.font = .preferredFont(forTextStyle: .body)
+        valueLabel.adjustsFontForContentSizeCategory = true
+        valueLabel.textColor = SharedUIAsset.text.color
+        valueLabel.numberOfLines = 0
+
+        let row = UIStackView(arrangedSubviews: [captionLabel, valueLabel])
+        row.axis = .vertical
+        row.spacing = 2
+        return row
+    }
+
+    private func makeSeparator() -> UIView {
+        let sep = UIView()
+        sep.backgroundColor = .separator
+        sep.translatesAutoresizingMaskIntoConstraints = false
+        sep.heightAnchor.constraint(equalToConstant: 0.5).isActive = true
+        return sep
+    }
+
+    private func updateCardAppearance() {
+        if traitCollection.userInterfaceStyle == .dark {
+            cardView.layer.shadowOpacity = 0
+            cardView.layer.borderWidth = 0.5
+            cardView.layer.borderColor = UIColor(white: 1.0, alpha: 0.14).cgColor
+        } else {
+            cardView.layer.shadowOpacity = 0.09
+            cardView.layer.borderWidth = 0
+        }
     }
 
     private func bind(to user: User) {
         greetingLabel.text = CoreStrings.accountGreetingFormat(user.username)
-        emailLabel.text = CoreStrings.accountProfileEmailFormat(user.email)
-        roleLabel.text = CoreStrings.accountProfileRoleFormat(user.role ?? "-")
-        idLabel.text = CoreStrings.accountProfileIdFormat(user.id)
+        emailValueLabel.text = user.email
+        roleValueLabel.text = user.role ?? "-"
+        idValueLabel.text = user.id
     }
 
     @objc private func cartTapped() {
@@ -131,7 +184,7 @@ final class LoggedInViewController: UIViewController {
 
     @objc private func logoutTapped() {
         spinner.startAnimating()
-        logoutButton.isEnabled = false
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
         Task { [session] in
             await session.logout()
         }
@@ -143,10 +196,12 @@ import SwiftUI
 
 #Preview("Logged In") {
     let user = User(id: "42", username: "sara", email: "sara@example.com", role: "admin", avatarURL: nil)
-    return LoggedInViewController(
-        session: PreviewAuthSession(),
-        user: user,
-        navigator: nil
+    return UINavigationController(
+        rootViewController: LoggedInViewController(
+            session: PreviewAuthSession(),
+            user: user,
+            navigator: nil
+        )
     )
 }
 #endif

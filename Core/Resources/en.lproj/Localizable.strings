@@ -16,11 +16,15 @@
 "account_login_button" = "Log in";
 "account_register_button" = "Create account";
 "account_register_screen_title" = "Create account";
+"account_register_subtitle" = "Fill in your details to get started.";
 "account_logout_button" = "Log out";
 "account_greeting_format" = "Hello, %@";
 "account_profile_email_format" = "Email: %@";
 "account_profile_role_format" = "Role: %@";
 "account_profile_id_format" = "User ID: %@";
+"account_profile_email_label" = "Email";
+"account_profile_role_label" = "Role";
+"account_profile_id_label" = "User ID";
 "account_error_field_required" = "This field is required.";
 "account_error_invalid_email" = "Enter a valid email address.";
 "account_error_invalid_credentials" = "Invalid username or password.";

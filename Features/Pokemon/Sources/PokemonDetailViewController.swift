@@ -46,8 +46,25 @@ public final class PokemonDetailViewController: UIViewController {
         view.backgroundColor = SharedUIAsset.background.color
         title = pokemon.name.capitalized
         setupUI()
+        updateCardAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { [weak self] (_: PokemonDetailViewController, _: UITraitCollection) in
+            self?.updateCardAppearance()
+        }
         showInitial()
         loadDetail()
+    }
+
+    private func updateCardAppearance() {
+        for card in metricsRowView.arrangedSubviews {
+            if traitCollection.userInterfaceStyle == .dark {
+                card.layer.shadowOpacity = 0
+                card.layer.borderWidth = 0.5
+                card.layer.borderColor = UIColor(white: 1.0, alpha: 0.14).cgColor
+            } else {
+                card.layer.shadowOpacity = 0.09
+                card.layer.borderWidth = 0
+            }
+        }
     }
 
     private func setupUI() {
@@ -173,6 +190,7 @@ public final class PokemonDetailViewController: UIViewController {
         statsStackView.isHidden = false
 
         activityIndicator.stopAnimating()
+        updateCardAppearance()
     }
 
     private func handleLoadError(_ error: PokemonDetailError) {
@@ -231,8 +249,11 @@ private extension PokemonDetailViewController {
     func makeMetricCard(title: String, value: String, icon: String) -> UIView {
         let card = UIView()
         card.backgroundColor = SharedUIAsset.cardBackground.color
-        card.layer.cornerRadius = 12
+        card.layer.cornerRadius = 14
         card.layer.cornerCurve = .continuous
+        card.layer.shadowColor = UIColor.black.cgColor
+        card.layer.shadowRadius = 10
+        card.layer.shadowOffset = CGSize(width: 0, height: 3)
 
         let iconView = UIImageView(image: UIImage(systemName: icon))
         iconView.tintColor = SharedUIAsset.secondaryText.color

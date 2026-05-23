@@ -40,6 +40,7 @@ final class LoggedOutViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = SharedUIAsset.background.color
         scrollView.backgroundColor = SharedUIAsset.background.color
+        scrollView.contentInsetAdjustmentBehavior = .never
         configureViews()
     }
 
