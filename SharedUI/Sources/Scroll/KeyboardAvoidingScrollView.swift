@@ -38,7 +38,8 @@ public final class KeyboardAvoidingScrollView: UIScrollView {
         let duration = (notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? TimeInterval) ?? 0.25
         let curveRaw = (notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt) ?? 0
         MainActor.assumeIsolated { [weak self] in
-            self?.applyKeyboard(endFrame: endFrame, duration: duration, curveRaw: curveRaw, visible: true)
+            guard let self, self.firstResponder(in: self) != nil else { return }
+            self.applyKeyboard(endFrame: endFrame, duration: duration, curveRaw: curveRaw, visible: true)
         }
     }
 

@@ -49,6 +49,7 @@ final class AppRootCoordinator: Coordinator {
         children.append(accountCoordinator)
 
         tabBarController.viewControllers = [pokemonNav, accountNav]
+        tabBarController.tabBar.tintColor = CoreAsset.accent.color
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
     }
