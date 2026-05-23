@@ -23,9 +23,18 @@ public final class LoaderCell: UITableViewCell {
 
     private func setupViews() {
         selectionStyle = .none
+        backgroundColor = .clear
         activityIndicator.hidesWhenStopped = false
         contentView.addSubview(activityIndicator)
         activityIndicator.centerInSuperview()
         contentView.heightAnchor.constraint(greaterThanOrEqualToConstant: 56).isActive = true
     }
 }
+
+#if DEBUG
+import SwiftUI
+
+#Preview("LoaderCell") {
+    CellPreview(LoaderCell(style: .default, reuseIdentifier: nil), height: 56)
+}
+#endif

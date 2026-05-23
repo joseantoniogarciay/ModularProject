@@ -36,6 +36,9 @@ Each helper sets `translatesAutoresizingMaskIntoConstraints = false` on the rece
 | Cell | Use when |
 |---|---|
 | `LoaderCell` | Pagination footer or any "loading more" indicator in a `UITableView`. Dequeue with `LoaderCell.reuseID`. |
+| `RetryCell` | Inline pagination-error row at the bottom of a `UITableView`. Shows a message and a retry button. Dequeue with `RetryCell.reuseID`. Configure via `configure(message:retryTitle:onRetry:)`. |
+
+**Cell background:** Always set `backgroundColor = .clear` in `setupViews()`. UITableViewCell defaults to `.systemBackground` (white); without this the cell shows a white box in `CellPreview` previews and can look wrong on grouped/insetGrouped table views whose background shows around rows. The table view manages the per-row background — the cell itself should be transparent.
 
 ### Reusable views — `SharedUI/Sources/Views/`
 
@@ -133,7 +136,7 @@ import SwiftUI
 
 **Why not return the cell directly.** Returning a bare `UIView` from `#Preview` makes the Xcode canvas treat that view as the root of the preview viewport, and it gets stretched to fill the entire simulator window (the `cell.frame = CGRect(...)` you might be tempted to set is overwritten by the canvas). The result is a cell whose `contentView` is hundreds of points tall, with the labels flying to opposite edges because their `topAnchor`/`bottomAnchor`/`centerYAnchor` constraints resolve against that giant frame — nothing like how the cell will actually render inside a `UITableView` row.
 
-`CellPreview` is a thin SwiftUI wrapper (`UIViewRepresentable` + `.frame(width:height:)` + padding + grouped background) that gives the cell a fixed-size container — SwiftUI honors the `.frame()` and the cell renders at realistic proportions, centered in the canvas with empty space around it. `width` defaults to 375 (iPhone-ish content width); pass `height` to pin it (typical cells: 60–96), or leave `height: nil` to let the cell's intrinsic content size decide.
+`CellPreview` is a thin SwiftUI wrapper (`UIViewRepresentable` + `.frame(width:height:)` + padding + grouped background) that gives the cell a fixed-size container — SwiftUI honors the `.frame()` and the cell renders at realistic proportions, centered in the canvas with empty space around it. `width` defaults to 375 (iPhone-ish content width); **always pass `height`** — `UITableViewCell` has no SwiftUI-visible intrinsic content size, so `height: nil` causes the cell to expand and fill the entire preview canvas instead of rendering at a realistic row height. Typical values: fixed-height utility cells (spinner-only, etc.) → their minimum height constant (e.g. `56`); content cells → match their `estimatedRowHeight` (e.g. `80`).
 
 **Anti-patterns:**
 

@@ -45,6 +45,8 @@ final class CartItemCell: UITableViewCell {
 
     private func setupViews() {
         accessoryType = .none
+        selectionStyle = .none
+        backgroundColor = .clear
 
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         nameLabel.font = .preferredFont(forTextStyle: .headline)
