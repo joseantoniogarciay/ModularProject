@@ -32,6 +32,7 @@ public actor TokenRefresher {
 
     public func currentValidAccessToken() async throws(TokenError) -> String {
         guard let tokens = await tokenStore.load() else {
+            await onTokensInvalidated?()
             throw .notAuthenticated
         }
         if let expiresAt = tokens.accessTokenExpiresAt,

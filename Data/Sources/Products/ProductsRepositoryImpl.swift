@@ -26,10 +26,7 @@ public struct ProductsRepositoryImpl: ProductsRepository {
             return response.data.products.map { $0.toDomain() }
         } catch let error as NetError {
             if case .noConnection = error { throw .noConnection }
-            if case let .http(status, _, _) = error, status == 401 { throw .notAuthenticated }
             throw .unknown(error)
-        } catch is TokenError {
-            throw .notAuthenticated
         } catch {
             throw .unknown(error)
         }

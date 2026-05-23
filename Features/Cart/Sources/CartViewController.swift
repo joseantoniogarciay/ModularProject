@@ -211,25 +211,22 @@ public final class CartViewController: UIViewController {
 
     private func messageFor(loadError error: CartFetchError) -> String {
         switch error {
-        case .noConnection:     return CoreStrings.errorNoConnection
-        case .notAuthenticated: return CoreStrings.errorGenericLoading
-        case .unknown:          return CoreStrings.errorGenericLoading
+        case .noConnection: return CoreStrings.errorNoConnection
+        case .unknown:      return CoreStrings.errorGenericLoading
         }
     }
 
     private func messageFor(productsError error: ProductsListError) -> String {
         switch error {
-        case .noConnection:     return CoreStrings.errorNoConnection
-        case .notAuthenticated: return CoreStrings.cartAddFailed
-        case .unknown:          return CoreStrings.cartAddFailed
+        case .noConnection: return CoreStrings.errorNoConnection
+        case .unknown:      return CoreStrings.cartAddFailed
         }
     }
 
     private func messageFor(addError error: CartAddItemError) -> String {
         switch error {
-        case .noConnection:     return CoreStrings.errorNoConnection
-        case .notAuthenticated: return CoreStrings.cartAddFailed
-        case .unknown:          return CoreStrings.cartAddFailed
+        case .noConnection: return CoreStrings.errorNoConnection
+        case .unknown:      return CoreStrings.cartAddFailed
         }
     }
 }
