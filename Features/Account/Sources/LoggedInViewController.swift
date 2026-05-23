@@ -8,6 +8,9 @@ final class LoggedInViewController: UIViewController {
     private weak var navigator: (any AccountNavigator)?
     private var user: User
 
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+
     private let greetingLabel = UILabel()
     private let emailLabel = UILabel()
     private let roleLabel = UILabel()
@@ -86,12 +89,25 @@ final class LoggedInViewController: UIViewController {
         stack.spacing = 12
         stack.alignment = .leading
         stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
+
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(stack)
+
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        scrollView.pinEdges(to: view)
 
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+
+            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -24),
         ])
     }
 

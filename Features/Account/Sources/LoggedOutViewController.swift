@@ -7,6 +7,9 @@ final class LoggedOutViewController: UIViewController {
     private let session: any AuthSession
     private weak var navigator: (any AccountNavigator)?
 
+    private let scrollView = KeyboardAvoidingScrollView()
+    private let contentView = UIView()
+
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let identifierField = ValidatedTextField(
@@ -55,9 +58,13 @@ final class LoggedOutViewController: UIViewController {
         identifierField.textField.textContentType = .username
         identifierField.textField.autocapitalizationType = .none
         identifierField.textField.autocorrectionType = .no
+        identifierField.textField.returnKeyType = .next
+        identifierField.textField.delegate = self
 
         passwordField.textField.isSecureTextEntry = true
         passwordField.textField.textContentType = .password
+        passwordField.textField.returnKeyType = .done
+        passwordField.textField.delegate = self
 
         loginButton.setTitle(CoreStrings.accountLoginButton, for: .normal)
         loginButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
@@ -89,12 +96,29 @@ final class LoggedOutViewController: UIViewController {
         stack.spacing = 16
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
+
+        configureLayout(stack: stack)
+    }
+
+    private func configureLayout(stack: UIStackView) {
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(stack)
+
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        scrollView.pinEdges(to: view)
 
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
-            stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+            contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor),
+
+            stack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
         ])
     }
 
@@ -145,5 +169,16 @@ final class LoggedOutViewController: UIViewController {
         case .invalidCredentials:  return CoreStrings.accountErrorInvalidCredentials
         case .unknown:             return CoreStrings.accountErrorGeneric
         }
+    }
+}
+
+extension LoggedOutViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField === identifierField.textField {
+            passwordField.textField.becomeFirstResponder()
+        } else {
+            textField.resignFirstResponder()
+        }
+        return true
     }
 }

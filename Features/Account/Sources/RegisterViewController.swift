@@ -7,6 +7,9 @@ final class RegisterViewController: UIViewController {
     private let session: any AuthSession
     private let onSuccess: () -> Void
 
+    private let scrollView = KeyboardAvoidingScrollView()
+    private let contentView = UIView()
+
     private let usernameField = ValidatedTextField(
         placeholder: CoreStrings.accountUsernamePlaceholder,
         validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
@@ -48,14 +51,20 @@ final class RegisterViewController: UIViewController {
         usernameField.textField.textContentType = .username
         usernameField.textField.autocapitalizationType = .none
         usernameField.textField.autocorrectionType = .no
+        usernameField.textField.returnKeyType = .next
+        usernameField.textField.delegate = self
 
         emailField.textField.keyboardType = .emailAddress
         emailField.textField.textContentType = .emailAddress
         emailField.textField.autocapitalizationType = .none
         emailField.textField.autocorrectionType = .no
+        emailField.textField.returnKeyType = .next
+        emailField.textField.delegate = self
 
         passwordField.textField.isSecureTextEntry = true
         passwordField.textField.textContentType = .newPassword
+        passwordField.textField.returnKeyType = .done
+        passwordField.textField.delegate = self
 
         registerButton.setTitle(CoreStrings.accountRegisterButton, for: .normal)
         registerButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
@@ -80,12 +89,25 @@ final class RegisterViewController: UIViewController {
         stack.spacing = 16
         stack.alignment = .fill
         stack.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(stack)
+
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(stack)
+
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        scrollView.pinEdges(to: view)
 
         NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
-            stack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 24),
+            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
+
+            stack.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 24),
+            stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -24),
         ])
     }
 
@@ -142,5 +164,18 @@ final class RegisterViewController: UIViewController {
         case .autoLoginFailed:      return CoreStrings.accountErrorGeneric
         case .unknown:              return CoreStrings.accountErrorGeneric
         }
+    }
+}
+
+extension RegisterViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField === usernameField.textField {
+            emailField.textField.becomeFirstResponder()
+        } else if textField === emailField.textField {
+            passwordField.textField.becomeFirstResponder()
+        } else {
+            textField.resignFirstResponder()
+        }
+        return true
     }
 }
