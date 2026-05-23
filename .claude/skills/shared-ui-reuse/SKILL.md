@@ -104,7 +104,7 @@ When promoting, expose only the surface the second consumer actually needs. Move
 
 ## Xcode previews for UIKit
 
-Previews in this project are **optional, not mandatory**. Add `#Preview` blocks where they pay off — screens you iterate on, cells with non-trivial layout, error/empty states — and skip them where they don't (e.g. plumbing views nobody ever tweaks visually). The trade-off is that `#Preview` requires `import SwiftUI`, which means even a UIKit-only module ends up touching SwiftUI in its source files for preview blocks; that is acceptable as a dev-only cost but worth weighing per-type rather than blanket-imposing.
+Previews in this project are **mandatory** for every file that contains a `UIViewController` or `UIView` subclass. Every view file must have at least one `#Preview` block at the bottom of the same file. The only exceptions are pure-plumbing types with no visual output (coordinators, delegates, data sources with no layout code).
 
 The `#Preview` macro supports returning `UIView` and `UIViewController` directly since iOS 17 / Xcode 15. The macro itself lives in `DeveloperToolsSupport`, but its expansion references SwiftUI types internally — so **`import SwiftUI` is required** even when the preview returns UIKit. Put it inside the `#if DEBUG` block so it never reaches Release.
 
@@ -216,6 +216,18 @@ These patterns **look** like SharedUI under-use at first glance but are correct 
 - **A feature view controller that writes `NSLayoutConstraint.activate([...])` against `view.safeAreaLayoutGuide.topAnchor` or `view.layoutMarginsGuide.leadingAnchor`.** These are explicit by design — there is no `pinEdges(to: safeArea)` helper, and adding one would not simplify the call site enough to be worth a separate API.
 
 Before flagging a `translatesAutoresizingMaskIntoConstraints = false` or an `NSLayoutConstraint.activate([...])` block: **look at the anchors in the block**. If any anchor matches an exception above, the explicit form is correct.
+
+## Content margins
+
+**All scrollable content containers must have at least 24 pt of horizontal padding on both sides.** A plain `UIView` used as a scroll view's content view has 8 pt `layoutMargins` by default — that is too tight. Always override it explicitly:
+
+```swift
+contentView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 24, bottom: 0, trailing: 24)
+```
+
+Then constrain the content stack to `contentView.layoutMarginsGuide` as usual. Never rely on the system default 8 pt for content regions. The 24 pt value is the project minimum; wider is acceptable for specific designs, narrower is not.
+
+This rule applies to every `UIScrollView` content container in features, regardless of screen type (forms, detail screens, profile pages, etc.).
 
 ## Color tokens — never use UIKit system colors directly
 

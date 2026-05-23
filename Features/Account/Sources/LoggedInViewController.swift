@@ -91,13 +91,20 @@ final class LoggedInViewController: UIViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 24, bottom: 0, trailing: 24)
         contentView.addSubview(stack)
+
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
-        scrollView.pinEdges(to: view)
 
         NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
             contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
             contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
             contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
@@ -130,3 +137,16 @@ final class LoggedInViewController: UIViewController {
         }
     }
 }
+
+#if DEBUG
+import SwiftUI
+
+#Preview("Logged In") {
+    let user = User(id: "42", username: "sara", email: "sara@example.com", role: "admin", avatarURL: nil)
+    return LoggedInViewController(
+        session: PreviewAuthSession(),
+        user: user,
+        navigator: nil
+    )
+}
+#endif

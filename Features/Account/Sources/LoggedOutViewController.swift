@@ -10,6 +10,7 @@ final class LoggedOutViewController: UIViewController {
     private let scrollView = KeyboardAvoidingScrollView()
     private let contentView = UIView()
 
+    private let logoView = UIImageView()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let identifierField = ValidatedTextField(
@@ -20,9 +21,8 @@ final class LoggedOutViewController: UIViewController {
         placeholder: CoreStrings.accountPasswordPlaceholder,
         validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
     )
-    private let loginButton = UIButton(type: .system)
-    private let registerButton = UIButton(type: .system)
-    private let errorLabel = UILabel()
+    private let loginButton = PrimaryButton()
+    private let registerButton = TextLinkButton()
     private let busyOverlay = BusyOverlay()
 
     init(session: any AuthSession, navigator: (any AccountNavigator)?) {
@@ -39,17 +39,23 @@ final class LoggedOutViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = CoreAsset.background.color
+        scrollView.backgroundColor = CoreAsset.background.color
         configureViews()
     }
 
     private func configureViews() {
+        logoView.image = SharedUIAsset.logo.image
+        logoView.contentMode = .scaleAspectFit
+        logoView.translatesAutoresizingMaskIntoConstraints = false
+
         titleLabel.text = CoreStrings.accountLoggedOutTitle
-        titleLabel.font = .preferredFont(forTextStyle: .title1)
+        titleLabel.font = .preferredFont(forTextStyle: .largeTitle)
         titleLabel.adjustsFontForContentSizeCategory = true
+        titleLabel.textColor = CoreAsset.text.color
         titleLabel.textAlignment = .center
 
         subtitleLabel.text = CoreStrings.accountLoggedOutSubtitle
-        subtitleLabel.font = .preferredFont(forTextStyle: .body)
+        subtitleLabel.font = .preferredFont(forTextStyle: .subheadline)
         subtitleLabel.adjustsFontForContentSizeCategory = true
         subtitleLabel.textColor = CoreAsset.secondaryText.color
         subtitleLabel.textAlignment = .center
@@ -67,41 +73,44 @@ final class LoggedOutViewController: UIViewController {
         passwordField.textField.delegate = self
 
         loginButton.setTitle(CoreStrings.accountLoginButton, for: .normal)
-        loginButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        loginButton.titleLabel?.adjustsFontForContentSizeCategory = true
         loginButton.addTarget(self, action: #selector(loginTapped), for: .touchUpInside)
 
         registerButton.setTitle(CoreStrings.accountRegisterButton, for: .normal)
-        registerButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
-        registerButton.titleLabel?.adjustsFontForContentSizeCategory = true
         registerButton.addTarget(self, action: #selector(registerTapped), for: .touchUpInside)
 
-        errorLabel.font = .preferredFont(forTextStyle: .footnote)
-        errorLabel.adjustsFontForContentSizeCategory = true
-        errorLabel.textColor = .systemRed
-        errorLabel.numberOfLines = 0
-        errorLabel.textAlignment = .center
-        errorLabel.isHidden = true
+        let headerStack = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
+        headerStack.axis = .vertical
+        headerStack.spacing = 8
+        headerStack.alignment = .center
 
-        let stack = UIStackView(arrangedSubviews: [
-            titleLabel,
-            subtitleLabel,
-            identifierField,
-            passwordField,
-            loginButton,
-            errorLabel,
-            registerButton,
-        ])
-        stack.axis = .vertical
-        stack.spacing = 16
-        stack.alignment = .fill
-        stack.translatesAutoresizingMaskIntoConstraints = false
+        let fieldStack = UIStackView(arrangedSubviews: [identifierField, passwordField])
+        fieldStack.axis = .vertical
+        fieldStack.spacing = 8
+        fieldStack.alignment = .fill
 
-        configureLayout(stack: stack)
+        let registerRow = UIStackView(arrangedSubviews: [registerButton])
+        registerRow.axis = .vertical
+        registerRow.alignment = .trailing
+
+        let actionStack = UIStackView(arrangedSubviews: [loginButton, registerRow])
+        actionStack.axis = .vertical
+        actionStack.alignment = .fill
+        actionStack.setCustomSpacing(24, after: loginButton)
+
+        let mainStack = UIStackView(arrangedSubviews: [headerStack, fieldStack, actionStack])
+        mainStack.axis = .vertical
+        mainStack.alignment = .fill
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        mainStack.setCustomSpacing(32, after: headerStack)
+        mainStack.setCustomSpacing(24, after: fieldStack)
+
+        configureLayout(logo: logoView, stack: mainStack)
     }
 
-    private func configureLayout(stack: UIStackView) {
+    private func configureLayout(logo: UIImageView, stack: UIStackView) {
         contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 24, bottom: 0, trailing: 24)
+        contentView.addSubview(logo)
         contentView.addSubview(stack)
 
         view.addSubview(scrollView)
@@ -116,9 +125,15 @@ final class LoggedOutViewController: UIViewController {
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
             contentView.heightAnchor.constraint(greaterThanOrEqualTo: scrollView.frameLayoutGuide.heightAnchor),
 
-            stack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            logo.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            logo.widthAnchor.constraint(equalToConstant: 64),
+            logo.heightAnchor.constraint(equalToConstant: 64),
+            logo.bottomAnchor.constraint(equalTo: stack.topAnchor, constant: -40),
+
+            stack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor, constant: 40),
             stack.leadingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: contentView.layoutMarginsGuide.trailingAnchor),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -40),
         ])
     }
 
@@ -152,15 +167,13 @@ final class LoggedOutViewController: UIViewController {
     }
 
     private func enterBusy() {
-        errorLabel.isHidden = true
         view.endEditing(true)
         busyOverlay.show(in: view)
         tabBarController?.tabBar.isUserInteractionEnabled = false
     }
 
     private func showError(_ text: String) {
-        errorLabel.text = text
-        errorLabel.isHidden = false
+        BannerCenter.shared.show(BannerPayload(message: text, style: .error))
     }
 
     private func message(for error: LoginError) -> String {
@@ -182,3 +195,14 @@ extension LoggedOutViewController: UITextFieldDelegate {
         return true
     }
 }
+
+#if DEBUG
+import SwiftUI
+
+#Preview("Logged Out") {
+    LoggedOutViewController(
+        session: PreviewAuthSession(),
+        navigator: nil
+    )
+}
+#endif

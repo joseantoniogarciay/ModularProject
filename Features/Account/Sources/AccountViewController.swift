@@ -28,7 +28,6 @@ final class AccountViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = CoreAsset.background.color
-        title = CoreStrings.accountTitle
 
         observationTask = Task { [weak self] in
             guard let self else { return }

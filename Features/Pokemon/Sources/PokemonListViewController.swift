@@ -56,7 +56,6 @@ public final class PokemonListViewController: UIViewController {
 
     private func setupUI() {
         view.backgroundColor = CoreAsset.background.color
-        title = CoreStrings.pokemonTitle
 
         let themeButton = UIBarButtonItem(
             image: UIImage(systemName: themeStore.current.systemImageName),

@@ -91,6 +91,7 @@ final class RegisterViewController: UIViewController {
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 24, bottom: 0, trailing: 24)
         contentView.addSubview(stack)
 
         view.addSubview(scrollView)
@@ -179,3 +180,16 @@ extension RegisterViewController: UITextFieldDelegate {
         return true
     }
 }
+
+#if DEBUG
+import SwiftUI
+
+#Preview("Register") {
+    UINavigationController(
+        rootViewController: RegisterViewController(
+            session: PreviewAuthSession(),
+            onSuccess: {}
+        )
+    )
+}
+#endif
