@@ -17,7 +17,6 @@ final class LoggedInViewController: UIViewController {
     private let idValueLabel = UILabel()
     private let cardView = UIView()
     private let cartButton = PrimaryButton()
-    private let spinner = UIActivityIndicatorView(style: .medium)
 
     init(session: any AuthSession, user: User, navigator: (any AccountNavigator)?) {
         self.session = session
@@ -56,15 +55,6 @@ final class LoggedInViewController: UIViewController {
     }
 
     private func configureViews() {
-        let logoutItem = UIBarButtonItem(
-            image: UIImage(systemName: "rectangle.portrait.and.arrow.right"),
-            style: .plain,
-            target: self,
-            action: #selector(logoutTapped)
-        )
-        logoutItem.tintColor = .systemRed
-        navigationItem.rightBarButtonItem = logoutItem
-
         greetingLabel.font = .preferredFont(forTextStyle: .largeTitle)
         greetingLabel.adjustsFontForContentSizeCategory = true
         greetingLabel.textColor = SharedUIAsset.text.color
@@ -92,8 +82,6 @@ final class LoggedInViewController: UIViewController {
 
         cartButton.setTitle(CoreStrings.accountCartButton, for: .normal)
         cartButton.addTarget(self, action: #selector(cartTapped), for: .touchUpInside)
-
-        spinner.hidesWhenStopped = true
 
         let mainStack = UIStackView(arrangedSubviews: [greetingLabel, cardView, cartButton])
         mainStack.axis = .vertical
@@ -180,14 +168,6 @@ final class LoggedInViewController: UIViewController {
 
     @objc private func cartTapped() {
         navigator?.accountDidRequestCart()
-    }
-
-    @objc private func logoutTapped() {
-        spinner.startAnimating()
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
-        Task { [session] in
-            await session.logout()
-        }
     }
 }
 

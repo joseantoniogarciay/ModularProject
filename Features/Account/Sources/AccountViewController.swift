@@ -9,6 +9,7 @@ final class AccountViewController: UIViewController {
     private var observationTask: Task<Void, Never>?
     private var currentChild: UIViewController?
     private var renderedAuthState: AuthState?
+    private let spinner = UIActivityIndicatorView(style: .medium)
 
     init(session: any AuthSession, navigator: any AccountNavigator) {
         self.session = session
@@ -60,12 +61,21 @@ final class AccountViewController: UIViewController {
         case .unknown:
             swap(in: makeLoadingViewController())
         case .anonymous(let reason):
+            navigationItem.rightBarButtonItem = nil
             let loggedOut = LoggedOutViewController(session: session, navigator: navigator)
             swap(in: loggedOut)
             view.layoutIfNeeded()
             navigationController?.popToRootViewController(animated: true)
             presentBanner(for: reason)
         case .authenticated(let user):
+            let logoutItem = UIBarButtonItem(
+                image: UIImage(systemName: "rectangle.portrait.and.arrow.right"),
+                style: .plain,
+                target: self,
+                action: #selector(logoutTapped)
+            )
+            logoutItem.tintColor = .systemRed
+            navigationItem.rightBarButtonItem = logoutItem
             let loggedIn = LoggedInViewController(session: session, user: user, navigator: navigator)
             swap(in: loggedIn)
         }
@@ -83,6 +93,14 @@ final class AccountViewController: UIViewController {
             )
         case .initial, .userLoggedOut:
             break
+        }
+    }
+
+    @objc private func logoutTapped() {
+        spinner.startAnimating()
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: spinner)
+        Task { [session] in
+            await session.logout()
         }
     }
 
