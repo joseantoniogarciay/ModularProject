@@ -43,3 +43,7 @@
 "cart_item_detail_format" = "%@ × %d";
 "cart_add_failed" = "No pudimos añadir el producto. Inténtalo de nuevo.";
 "cart_simulate_expire_button" = "Caducar";
+"cart_no_products_title" = "No hay productos en el feed";
+"cart_no_products_message" = "El catálogo de productos está vacío. Abre api.freeapi.app para añadir algunos y vuelve para pulsar + de nuevo.";
+"cart_no_products_open_button" = "Abrir el feed";
+"cart_no_products_cancel_button" = "Ahora no";

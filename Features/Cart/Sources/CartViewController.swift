@@ -1,4 +1,5 @@
 import Core
+import SafariServices
 import SharedUI
 import UIKit
 
@@ -254,7 +255,7 @@ private extension CartViewController {
             return
         }
         guard let productId = products.randomElement()?.id else {
-            presentAddError(CoreStrings.cartAddFailed)
+            presentNoProductsDialog()
             return
         }
         do {
@@ -279,6 +280,27 @@ private extension CartViewController {
             style: .error,
             iconSystemName: "xmark.circle.fill"
         ))
+    }
+
+    func presentNoProductsDialog() {
+        let dialog = ConfirmationDialogViewController(
+            payload: ConfirmationDialogPayload(
+                iconSystemName: "tray",
+                title: CoreStrings.cartNoProductsTitle,
+                message: CoreStrings.cartNoProductsMessage,
+                confirm: ConfirmationDialogAction(title: CoreStrings.cartNoProductsOpenButton) { [weak self] in
+                    self?.presentSeedFeedSafari()
+                },
+                cancel: ConfirmationDialogAction(title: CoreStrings.cartNoProductsCancelButton)
+            )
+        )
+        present(dialog, animated: true)
+    }
+
+    func presentSeedFeedSafari() {
+        guard let url = URL(string: "https://api.freeapi.app") else { return }
+        let safari = SFSafariViewController(url: url)
+        present(safari, animated: true)
     }
 
     func handleLoaded(_ fetched: Cart) {
