@@ -13,8 +13,9 @@ public final class PokemonDetailViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
     private let spriteImageView = UIImageView()
-    private let typesLabel = UILabel()
-    private let metricsLabel = UILabel()
+    private let typesWrapperView = UIView()
+    private let typesStackView = UIStackView()
+    private let metricsRowView = UIStackView()
     private let statsHeaderLabel = UILabel()
     private let statsStackView = UIStackView()
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
@@ -57,7 +58,7 @@ public final class PokemonDetailViewController: UIViewController {
         stackView.axis = .vertical
         stackView.spacing = 16
         stackView.alignment = .fill
-        stackView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        stackView.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 32, right: 16)
         stackView.isLayoutMarginsRelativeArrangement = true
         scrollView.addSubview(stackView)
         stackView.pinEdges(to: scrollView)
@@ -66,26 +67,36 @@ public final class PokemonDetailViewController: UIViewController {
         spriteImageView.contentMode = .scaleAspectFit
         spriteImageView.tintColor = CoreAsset.secondaryText.color
         spriteImageView.translatesAutoresizingMaskIntoConstraints = false
-        spriteImageView.heightAnchor.constraint(equalToConstant: 220).isActive = true
+        spriteImageView.heightAnchor.constraint(equalToConstant: 200).isActive = true
         stackView.addArrangedSubview(spriteImageView)
 
-        typesLabel.numberOfLines = 0
-        typesLabel.font = .preferredFont(forTextStyle: .headline)
-        typesLabel.adjustsFontForContentSizeCategory = true
-        stackView.addArrangedSubview(typesLabel)
+        typesStackView.axis = .horizontal
+        typesStackView.spacing = 8
+        typesStackView.alignment = .center
+        typesStackView.translatesAutoresizingMaskIntoConstraints = false
+        typesWrapperView.translatesAutoresizingMaskIntoConstraints = false
+        typesWrapperView.addSubview(typesStackView)
+        NSLayoutConstraint.activate([
+            typesStackView.topAnchor.constraint(equalTo: typesWrapperView.topAnchor),
+            typesStackView.bottomAnchor.constraint(equalTo: typesWrapperView.bottomAnchor),
+            typesStackView.centerXAnchor.constraint(equalTo: typesWrapperView.centerXAnchor),
+            typesStackView.leadingAnchor.constraint(greaterThanOrEqualTo: typesWrapperView.leadingAnchor),
+        ])
+        stackView.addArrangedSubview(typesWrapperView)
 
-        metricsLabel.numberOfLines = 0
-        metricsLabel.font = .preferredFont(forTextStyle: .body)
-        metricsLabel.adjustsFontForContentSizeCategory = true
-        stackView.addArrangedSubview(metricsLabel)
+        metricsRowView.axis = .horizontal
+        metricsRowView.spacing = 12
+        metricsRowView.distribution = .fillEqually
+        stackView.addArrangedSubview(metricsRowView)
 
-        statsHeaderLabel.text = "Stats"
+        statsHeaderLabel.text = "Base Stats"
         statsHeaderLabel.font = .preferredFont(forTextStyle: .headline)
         statsHeaderLabel.adjustsFontForContentSizeCategory = true
         stackView.addArrangedSubview(statsHeaderLabel)
+        stackView.setCustomSpacing(10, after: statsHeaderLabel)
 
         statsStackView.axis = .vertical
-        statsStackView.spacing = 8
+        statsStackView.spacing = 10
         statsStackView.alignment = .fill
         stackView.addArrangedSubview(statsStackView)
 
@@ -105,8 +116,8 @@ public final class PokemonDetailViewController: UIViewController {
             placeholder: UIImage(systemName: "photo"),
             on: spriteImageView
         )
-        typesLabel.isHidden = true
-        metricsLabel.isHidden = true
+        typesWrapperView.isHidden = true
+        metricsRowView.isHidden = true
         statsHeaderLabel.isHidden = true
         statsStackView.isHidden = true
     }
@@ -137,17 +148,22 @@ public final class PokemonDetailViewController: UIViewController {
             imageLoader.setImage(url, placeholder: spriteImageView.image, on: spriteImageView)
         }
 
-        typesLabel.text = "Types: \(detail.types.joined(separator: ", "))"
-        typesLabel.isHidden = false
+        typesStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        for type in detail.types {
+            typesStackView.addArrangedSubview(makeTypeBadge(type))
+        }
+        typesWrapperView.isHidden = false
 
-        let heightInMetres = Double(detail.heightDecimetres) / 10.0
-        let weightInKilos = Double(detail.weightHectograms) / 10.0
-        metricsLabel.text = String(
-            format: "Height: %.1f m    Weight: %.1f kg",
-            heightInMetres,
-            weightInKilos
+        metricsRowView.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        let heightM = Double(detail.heightDecimetres) / 10.0
+        let weightKg = Double(detail.weightHectograms) / 10.0
+        metricsRowView.addArrangedSubview(
+            makeMetricCard(title: "Height", value: String(format: "%.1f m", heightM), icon: "ruler")
         )
-        metricsLabel.isHidden = false
+        metricsRowView.addArrangedSubview(
+            makeMetricCard(title: "Weight", value: String(format: "%.1f kg", weightKg), icon: "scalemass")
+        )
+        metricsRowView.isHidden = false
 
         statsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for stat in detail.stats {
@@ -175,33 +191,179 @@ public final class PokemonDetailViewController: UIViewController {
         case .unknown:      return CoreStrings.errorGenericLoading
         }
     }
-
-    private func makeStatRow(_ stat: PokemonStat) -> UIView {
-        let row = UIStackView()
-        row.axis = .horizontal
-        row.spacing = 8
-        row.distribution = .equalSpacing
-
-        let nameLabel = UILabel()
-        nameLabel.text = stat.name.replacingOccurrences(of: "-", with: " ").capitalized
-        nameLabel.font = .preferredFont(forTextStyle: .body)
-        nameLabel.adjustsFontForContentSizeCategory = true
-
-        let valueLabel = UILabel()
-        valueLabel.text = "\(stat.baseValue)"
-        valueLabel.font = .preferredFont(forTextStyle: .body)
-        valueLabel.adjustsFontForContentSizeCategory = true
-        valueLabel.textColor = CoreAsset.secondaryText.color
-
-        row.addArrangedSubview(nameLabel)
-        row.addArrangedSubview(valueLabel)
-        return row
-    }
 }
+
+// MARK: - RetryViewDelegate
 
 extension PokemonDetailViewController: RetryViewDelegate {
     public func retryViewDidTapRetry(_ retryView: RetryView) {
         loadDetail()
+    }
+}
+
+// MARK: - View factories
+
+private extension PokemonDetailViewController {
+    func makeTypeBadge(_ type: String) -> UIView {
+        let badge = UIView()
+        badge.backgroundColor = typeColor(for: type)
+        badge.layer.cornerRadius = 10
+        badge.layer.cornerCurve = .continuous
+
+        let label = UILabel()
+        label.text = type.capitalized
+        let base = UIFont.systemFont(ofSize: 12, weight: .semibold)
+        label.font = UIFontMetrics(forTextStyle: .caption1).scaledFont(for: base)
+        label.adjustsFontForContentSizeCategory = true
+        label.textColor = .white
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        badge.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: badge.topAnchor, constant: 5),
+            label.bottomAnchor.constraint(equalTo: badge.bottomAnchor, constant: -5),
+            label.leadingAnchor.constraint(equalTo: badge.leadingAnchor, constant: 12),
+            label.trailingAnchor.constraint(equalTo: badge.trailingAnchor, constant: -12),
+        ])
+        return badge
+    }
+
+    func makeMetricCard(title: String, value: String, icon: String) -> UIView {
+        let card = UIView()
+        card.backgroundColor = .secondarySystemBackground
+        card.layer.cornerRadius = 12
+        card.layer.cornerCurve = .continuous
+
+        let iconView = UIImageView(image: UIImage(systemName: icon))
+        iconView.tintColor = CoreAsset.secondaryText.color
+        iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .body)
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+
+        let valueLabel = UILabel()
+        valueLabel.text = value
+        valueLabel.font = .preferredFont(forTextStyle: .headline)
+        valueLabel.adjustsFontForContentSizeCategory = true
+        valueLabel.textAlignment = .center
+        valueLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = .preferredFont(forTextStyle: .caption1)
+        titleLabel.textColor = CoreAsset.secondaryText.color
+        titleLabel.adjustsFontForContentSizeCategory = true
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let vStack = UIStackView(arrangedSubviews: [iconView, valueLabel, titleLabel])
+        vStack.axis = .vertical
+        vStack.alignment = .center
+        vStack.spacing = 4
+        vStack.translatesAutoresizingMaskIntoConstraints = false
+
+        card.addSubview(vStack)
+        NSLayoutConstraint.activate([
+            vStack.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
+            vStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14),
+            vStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
+            vStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
+        ])
+        return card
+    }
+
+    func makeStatRow(_ stat: PokemonStat) -> UIView {
+        let nameLabel = UILabel()
+        nameLabel.text = displayName(for: stat.name)
+        nameLabel.font = .preferredFont(forTextStyle: .caption1)
+        nameLabel.textColor = CoreAsset.secondaryText.color
+        nameLabel.adjustsFontForContentSizeCategory = true
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        nameLabel.widthAnchor.constraint(equalToConstant: 68).isActive = true
+
+        let valueLabel = UILabel()
+        valueLabel.text = "\(stat.baseValue)"
+        valueLabel.font = .preferredFont(forTextStyle: .caption1)
+        valueLabel.textColor = CoreAsset.secondaryText.color
+        valueLabel.adjustsFontForContentSizeCategory = true
+        valueLabel.textAlignment = .right
+        valueLabel.translatesAutoresizingMaskIntoConstraints = false
+        valueLabel.widthAnchor.constraint(equalToConstant: 30).isActive = true
+
+        let trackView = UIView()
+        trackView.backgroundColor = .quaternarySystemFill
+        trackView.layer.cornerRadius = 3
+        trackView.translatesAutoresizingMaskIntoConstraints = false
+
+        let fillView = UIView()
+        fillView.backgroundColor = barColor(for: stat.baseValue)
+        fillView.layer.cornerRadius = 3
+        fillView.translatesAutoresizingMaskIntoConstraints = false
+        trackView.addSubview(fillView)
+
+        let ratio = max(0.01, min(CGFloat(stat.baseValue) / 255.0, 1.0))
+        NSLayoutConstraint.activate([
+            fillView.topAnchor.constraint(equalTo: trackView.topAnchor),
+            fillView.bottomAnchor.constraint(equalTo: trackView.bottomAnchor),
+            fillView.leadingAnchor.constraint(equalTo: trackView.leadingAnchor),
+            fillView.widthAnchor.constraint(equalTo: trackView.widthAnchor, multiplier: ratio),
+            trackView.heightAnchor.constraint(equalToConstant: 6),
+        ])
+
+        let row = UIStackView(arrangedSubviews: [nameLabel, trackView, valueLabel])
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 8
+        return row
+    }
+}
+
+// MARK: - Helpers
+
+private extension PokemonDetailViewController {
+    static let typeColors: [String: UIColor] = [
+        "fire": UIColor(red: 0.98, green: 0.42, blue: 0.21, alpha: 1),
+        "water": UIColor(red: 0.24, green: 0.56, blue: 0.90, alpha: 1),
+        "grass": UIColor(red: 0.32, green: 0.72, blue: 0.30, alpha: 1),
+        "electric": UIColor(red: 0.95, green: 0.72, blue: 0.10, alpha: 1),
+        "psychic": UIColor(red: 0.95, green: 0.29, blue: 0.52, alpha: 1),
+        "ice": UIColor(red: 0.44, green: 0.74, blue: 0.83, alpha: 1),
+        "dragon": UIColor(red: 0.44, green: 0.20, blue: 0.95, alpha: 1),
+        "dark": UIColor(red: 0.44, green: 0.35, blue: 0.29, alpha: 1),
+        "fairy": UIColor(red: 0.90, green: 0.55, blue: 0.72, alpha: 1),
+        "fighting": UIColor(red: 0.75, green: 0.19, blue: 0.15, alpha: 1),
+        "poison": UIColor(red: 0.63, green: 0.25, blue: 0.63, alpha: 1),
+        "ground": UIColor(red: 0.88, green: 0.72, blue: 0.35, alpha: 1),
+        "rock": UIColor(red: 0.71, green: 0.63, blue: 0.37, alpha: 1),
+        "bug": UIColor(red: 0.59, green: 0.67, blue: 0.08, alpha: 1),
+        "ghost": UIColor(red: 0.44, green: 0.35, blue: 0.62, alpha: 1),
+        "steel": UIColor(red: 0.60, green: 0.62, blue: 0.70, alpha: 1),
+        "normal": UIColor(red: 0.66, green: 0.65, blue: 0.48, alpha: 1),
+        "flying": UIColor(red: 0.55, green: 0.53, blue: 0.90, alpha: 1),
+    ]
+
+    func typeColor(for type: String) -> UIColor {
+        Self.typeColors[type.lowercased()] ?? .systemGray
+    }
+
+    func barColor(for value: Int) -> UIColor {
+        switch value {
+        case ..<50:   return .systemRed
+        case 50..<80: return .systemOrange
+        case 80..<100: return .systemYellow
+        default:      return .systemGreen
+        }
+    }
+
+    func displayName(for statName: String) -> String {
+        switch statName {
+        case "hp":              return "HP"
+        case "attack":          return "Atk"
+        case "defense":         return "Def"
+        case "special-attack":  return "Sp. Atk"
+        case "special-defense": return "Sp. Def"
+        case "speed":           return "Speed"
+        default: return statName.replacingOccurrences(of: "-", with: " ").capitalized
+        }
     }
 }
 

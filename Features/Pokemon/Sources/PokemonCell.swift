@@ -15,6 +15,9 @@ final class PokemonCell: UITableViewCell {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupViews()
         updateCardAppearance()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { [weak self] (_: PokemonCell, _: UITraitCollection) in
+            self?.updateCardAppearance()
+        }
     }
 
     @available(*, unavailable)
@@ -50,11 +53,6 @@ final class PokemonCell: UITableViewCell {
                 ? CGAffineTransform(scaleX: 0.97, y: 0.97)
                 : .identity
         }
-    }
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        updateCardAppearance()
     }
 
     private func updateCardAppearance() {
