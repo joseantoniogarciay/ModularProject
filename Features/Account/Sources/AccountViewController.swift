@@ -27,7 +27,7 @@ final class AccountViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = CoreAsset.background.color
+        view.backgroundColor = SharedUIAsset.background.color
 
         observationTask = Task { [weak self] in
             guard let self else { return }
@@ -87,7 +87,7 @@ final class AccountViewController: UIViewController {
 
     private func makeLoadingViewController() -> UIViewController {
         let viewController = UIViewController()
-        viewController.view.backgroundColor = CoreAsset.background.color
+        viewController.view.backgroundColor = SharedUIAsset.background.color
         let spinner = UIActivityIndicatorView(style: .medium)
         spinner.startAnimating()
         viewController.view.addSubview(spinner)

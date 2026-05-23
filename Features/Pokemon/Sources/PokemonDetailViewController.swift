@@ -43,7 +43,7 @@ public final class PokemonDetailViewController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = CoreAsset.background.color
+        view.backgroundColor = SharedUIAsset.background.color
         title = pokemon.name.capitalized
         setupUI()
         showInitial()
@@ -51,7 +51,7 @@ public final class PokemonDetailViewController: UIViewController {
     }
 
     private func setupUI() {
-        scrollView.backgroundColor = CoreAsset.background.color
+        scrollView.backgroundColor = SharedUIAsset.background.color
         view.addSubview(scrollView)
         scrollView.pinEdges(to: view)
 
@@ -65,7 +65,7 @@ public final class PokemonDetailViewController: UIViewController {
         stackView.widthAnchor.constraint(equalTo: scrollView.widthAnchor).isActive = true
 
         spriteImageView.contentMode = .scaleAspectFit
-        spriteImageView.tintColor = CoreAsset.secondaryText.color
+        spriteImageView.tintColor = SharedUIAsset.secondaryText.color
         spriteImageView.translatesAutoresizingMaskIntoConstraints = false
         spriteImageView.heightAnchor.constraint(equalToConstant: 200).isActive = true
         stackView.addArrangedSubview(spriteImageView)
@@ -230,12 +230,12 @@ private extension PokemonDetailViewController {
 
     func makeMetricCard(title: String, value: String, icon: String) -> UIView {
         let card = UIView()
-        card.backgroundColor = CoreAsset.cardBackground.color
+        card.backgroundColor = SharedUIAsset.cardBackground.color
         card.layer.cornerRadius = 12
         card.layer.cornerCurve = .continuous
 
         let iconView = UIImageView(image: UIImage(systemName: icon))
-        iconView.tintColor = CoreAsset.secondaryText.color
+        iconView.tintColor = SharedUIAsset.secondaryText.color
         iconView.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .body)
         iconView.contentMode = .scaleAspectFit
         iconView.translatesAutoresizingMaskIntoConstraints = false
@@ -250,7 +250,7 @@ private extension PokemonDetailViewController {
         let titleLabel = UILabel()
         titleLabel.text = title
         titleLabel.font = .preferredFont(forTextStyle: .caption1)
-        titleLabel.textColor = CoreAsset.secondaryText.color
+        titleLabel.textColor = SharedUIAsset.secondaryText.color
         titleLabel.adjustsFontForContentSizeCategory = true
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -275,7 +275,7 @@ private extension PokemonDetailViewController {
         let nameLabel = UILabel()
         nameLabel.text = displayName(for: stat.name)
         nameLabel.font = .preferredFont(forTextStyle: .caption1)
-        nameLabel.textColor = CoreAsset.secondaryText.color
+        nameLabel.textColor = SharedUIAsset.secondaryText.color
         nameLabel.adjustsFontForContentSizeCategory = true
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         nameLabel.widthAnchor.constraint(equalToConstant: 68).isActive = true
@@ -283,14 +283,14 @@ private extension PokemonDetailViewController {
         let valueLabel = UILabel()
         valueLabel.text = "\(stat.baseValue)"
         valueLabel.font = .preferredFont(forTextStyle: .caption1)
-        valueLabel.textColor = CoreAsset.secondaryText.color
+        valueLabel.textColor = SharedUIAsset.secondaryText.color
         valueLabel.adjustsFontForContentSizeCategory = true
         valueLabel.textAlignment = .right
         valueLabel.translatesAutoresizingMaskIntoConstraints = false
         valueLabel.widthAnchor.constraint(equalToConstant: 30).isActive = true
 
         let trackView = UIView()
-        trackView.backgroundColor = CoreAsset.statTrack.color
+        trackView.backgroundColor = SharedUIAsset.statTrack.color
         trackView.layer.cornerRadius = 3
         trackView.translatesAutoresizingMaskIntoConstraints = false
 

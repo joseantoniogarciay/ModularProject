@@ -55,7 +55,7 @@ public final class PokemonListViewController: UIViewController {
     }
 
     private func setupUI() {
-        view.backgroundColor = CoreAsset.background.color
+        view.backgroundColor = SharedUIAsset.background.color
 
         let themeButton = UIBarButtonItem(
             image: UIImage(systemName: themeStore.current.systemImageName),
@@ -75,7 +75,7 @@ public final class PokemonListViewController: UIViewController {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 108
         tableView.separatorStyle = .none
-        tableView.backgroundColor = CoreAsset.background.color
+        tableView.backgroundColor = SharedUIAsset.background.color
 
         view.addSubview(tableView)
         tableView.pinEdges(to: view)

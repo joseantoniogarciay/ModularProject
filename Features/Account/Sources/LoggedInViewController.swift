@@ -39,7 +39,7 @@ final class LoggedInViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = CoreAsset.background.color
+        view.backgroundColor = SharedUIAsset.background.color
         configureViews()
         bind(to: user)
         Task { [session] in
@@ -59,7 +59,7 @@ final class LoggedInViewController: UIViewController {
         for label in [emailLabel, roleLabel, idLabel] {
             label.font = .preferredFont(forTextStyle: .body)
             label.adjustsFontForContentSizeCategory = true
-            label.textColor = CoreAsset.secondaryText.color
+            label.textColor = SharedUIAsset.secondaryText.color
             label.numberOfLines = 0
         }
 

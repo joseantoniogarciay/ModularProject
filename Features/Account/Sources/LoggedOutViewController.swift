@@ -38,8 +38,8 @@ final class LoggedOutViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = CoreAsset.background.color
-        scrollView.backgroundColor = CoreAsset.background.color
+        view.backgroundColor = SharedUIAsset.background.color
+        scrollView.backgroundColor = SharedUIAsset.background.color
         configureViews()
     }
 
@@ -51,13 +51,13 @@ final class LoggedOutViewController: UIViewController {
         titleLabel.text = CoreStrings.accountLoggedOutTitle
         titleLabel.font = .preferredFont(forTextStyle: .largeTitle)
         titleLabel.adjustsFontForContentSizeCategory = true
-        titleLabel.textColor = CoreAsset.text.color
+        titleLabel.textColor = SharedUIAsset.text.color
         titleLabel.textAlignment = .center
 
         subtitleLabel.text = CoreStrings.accountLoggedOutSubtitle
         subtitleLabel.font = .preferredFont(forTextStyle: .subheadline)
         subtitleLabel.adjustsFontForContentSizeCategory = true
-        subtitleLabel.textColor = CoreAsset.secondaryText.color
+        subtitleLabel.textColor = SharedUIAsset.secondaryText.color
         subtitleLabel.textAlignment = .center
         subtitleLabel.numberOfLines = 0
 

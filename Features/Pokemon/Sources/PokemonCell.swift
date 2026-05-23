@@ -71,7 +71,7 @@ final class PokemonCell: UITableViewCell {
         selectionStyle = .none
 
         cardView.translatesAutoresizingMaskIntoConstraints = false
-        cardView.backgroundColor = CoreAsset.cardBackground.color
+        cardView.backgroundColor = SharedUIAsset.cardBackground.color
         cardView.layer.cornerRadius = 14
         cardView.layer.cornerCurve = .continuous
         cardView.layer.shadowColor = UIColor.black.cgColor
@@ -79,7 +79,7 @@ final class PokemonCell: UITableViewCell {
         cardView.layer.shadowOffset = CGSize(width: 0, height: 3)
 
         spriteImageView.contentMode = .scaleAspectFit
-        spriteImageView.tintColor = CoreAsset.secondaryText.color
+        spriteImageView.tintColor = SharedUIAsset.secondaryText.color
         spriteImageView.pinSize(72)
 
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -88,12 +88,12 @@ final class PokemonCell: UITableViewCell {
 
         numberLabel.translatesAutoresizingMaskIntoConstraints = false
         numberLabel.font = .preferredFont(forTextStyle: .caption1)
-        numberLabel.textColor = CoreAsset.secondaryText.color
+        numberLabel.textColor = SharedUIAsset.secondaryText.color
         numberLabel.adjustsFontForContentSizeCategory = true
 
         let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
         chevron.translatesAutoresizingMaskIntoConstraints = false
-        chevron.tintColor = CoreAsset.secondaryText.color
+        chevron.tintColor = SharedUIAsset.secondaryText.color
         chevron.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .caption1)
         chevron.setContentHuggingPriority(.required, for: .horizontal)
 

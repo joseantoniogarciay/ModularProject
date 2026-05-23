@@ -56,7 +56,7 @@ final class CartItemCell: UITableViewCell {
         detailLabel.translatesAutoresizingMaskIntoConstraints = false
         detailLabel.font = .preferredFont(forTextStyle: .subheadline)
         detailLabel.adjustsFontForContentSizeCategory = true
-        detailLabel.textColor = CoreAsset.secondaryText.color
+        detailLabel.textColor = SharedUIAsset.secondaryText.color
 
         subtotalLabel.translatesAutoresizingMaskIntoConstraints = false
         subtotalLabel.font = .preferredFont(forTextStyle: .headline)

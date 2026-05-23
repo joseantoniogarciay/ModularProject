@@ -2,6 +2,7 @@ import Account
 import Cart
 import Core
 import Pokemon
+import SharedUI
 import UIKit
 
 @MainActor
@@ -49,7 +50,7 @@ final class AppRootCoordinator: Coordinator {
         children.append(accountCoordinator)
 
         tabBarController.viewControllers = [pokemonNav, accountNav]
-        tabBarController.tabBar.tintColor = CoreAsset.accent.color
+        tabBarController.tabBar.tintColor = SharedUIAsset.accent.color
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
     }
