@@ -21,6 +21,8 @@
 "account_profile_email_format" = "Email: %@";
 "account_profile_role_format" = "Role: %@";
 "account_profile_id_format" = "User ID: %@";
+"account_error_field_required" = "This field is required.";
+"account_error_invalid_email" = "Enter a valid email address.";
 "account_error_invalid_credentials" = "Invalid username or password.";
 "account_error_taken" = "That username or email is already taken.";
 "account_error_generic" = "Something went wrong. Please try again.";

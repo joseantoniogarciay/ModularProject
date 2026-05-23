@@ -7,9 +7,21 @@ final class RegisterViewController: UIViewController {
     private let session: any AuthSession
     private let onSuccess: () -> Void
 
-    private let usernameField = UITextField()
-    private let emailField = UITextField()
-    private let passwordField = UITextField()
+    private let usernameField = ValidatedTextField(
+        placeholder: CoreStrings.accountUsernamePlaceholder,
+        validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
+    )
+    private let emailField = ValidatedTextField(
+        placeholder: CoreStrings.accountEmailPlaceholder,
+        validators: [
+            TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired),
+            TextFieldValidators.email(CoreStrings.accountErrorInvalidEmail),
+        ]
+    )
+    private let passwordField = ValidatedTextField(
+        placeholder: CoreStrings.accountPasswordPlaceholder,
+        validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
+    )
     private let registerButton = UIButton(type: .system)
     private let errorLabel = UILabel()
     private let busyOverlay = BusyOverlay()
@@ -33,20 +45,17 @@ final class RegisterViewController: UIViewController {
     }
 
     private func configureViews() {
-        configureTextField(usernameField, placeholder: CoreStrings.accountUsernamePlaceholder)
-        usernameField.textContentType = .username
-        usernameField.autocapitalizationType = .none
-        usernameField.autocorrectionType = .no
+        usernameField.textField.textContentType = .username
+        usernameField.textField.autocapitalizationType = .none
+        usernameField.textField.autocorrectionType = .no
 
-        configureTextField(emailField, placeholder: CoreStrings.accountEmailPlaceholder)
-        emailField.keyboardType = .emailAddress
-        emailField.textContentType = .emailAddress
-        emailField.autocapitalizationType = .none
-        emailField.autocorrectionType = .no
+        emailField.textField.keyboardType = .emailAddress
+        emailField.textField.textContentType = .emailAddress
+        emailField.textField.autocapitalizationType = .none
+        emailField.textField.autocorrectionType = .no
 
-        configureTextField(passwordField, placeholder: CoreStrings.accountPasswordPlaceholder)
-        passwordField.isSecureTextEntry = true
-        passwordField.textContentType = .newPassword
+        passwordField.textField.isSecureTextEntry = true
+        passwordField.textField.textContentType = .newPassword
 
         registerButton.setTitle(CoreStrings.accountRegisterButton, for: .normal)
         registerButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
@@ -80,18 +89,14 @@ final class RegisterViewController: UIViewController {
         ])
     }
 
-    private func configureTextField(_ field: UITextField, placeholder: String) {
-        field.placeholder = placeholder
-        field.borderStyle = .roundedRect
-        field.font = .preferredFont(forTextStyle: .body)
-        field.adjustsFontForContentSizeCategory = true
-    }
-
     @objc private func registerTapped() {
+        let usernameValid = usernameField.validate()
+        let emailValid = emailField.validate()
+        let passwordValid = passwordField.validate()
+        guard usernameValid, emailValid, passwordValid else { return }
         let username = usernameField.text?.trimmingCharacters(in: .whitespaces) ?? ""
         let email = emailField.text?.trimmingCharacters(in: .whitespaces) ?? ""
         let password = passwordField.text ?? ""
-        guard !username.isEmpty, !email.isEmpty, !password.isEmpty else { return }
         enterBusy()
         Task {
             await self.performRegister(username: username, email: email, password: password)

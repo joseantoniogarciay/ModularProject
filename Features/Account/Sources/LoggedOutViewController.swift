@@ -9,8 +9,14 @@ final class LoggedOutViewController: UIViewController {
 
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
-    private let identifierField = UITextField()
-    private let passwordField = UITextField()
+    private let identifierField = ValidatedTextField(
+        placeholder: CoreStrings.accountUsernameOrEmailPlaceholder,
+        validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
+    )
+    private let passwordField = ValidatedTextField(
+        placeholder: CoreStrings.accountPasswordPlaceholder,
+        validators: [TextFieldValidators.notEmpty(CoreStrings.accountErrorFieldRequired)]
+    )
     private let loginButton = UIButton(type: .system)
     private let registerButton = UIButton(type: .system)
     private let errorLabel = UILabel()
@@ -46,14 +52,12 @@ final class LoggedOutViewController: UIViewController {
         subtitleLabel.textAlignment = .center
         subtitleLabel.numberOfLines = 0
 
-        configureTextField(identifierField, placeholder: CoreStrings.accountUsernameOrEmailPlaceholder)
-        identifierField.textContentType = .username
-        identifierField.autocapitalizationType = .none
-        identifierField.autocorrectionType = .no
+        identifierField.textField.textContentType = .username
+        identifierField.textField.autocapitalizationType = .none
+        identifierField.textField.autocorrectionType = .no
 
-        configureTextField(passwordField, placeholder: CoreStrings.accountPasswordPlaceholder)
-        passwordField.isSecureTextEntry = true
-        passwordField.textContentType = .password
+        passwordField.textField.isSecureTextEntry = true
+        passwordField.textField.textContentType = .password
 
         loginButton.setTitle(CoreStrings.accountLoginButton, for: .normal)
         loginButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
@@ -94,17 +98,12 @@ final class LoggedOutViewController: UIViewController {
         ])
     }
 
-    private func configureTextField(_ field: UITextField, placeholder: String) {
-        field.placeholder = placeholder
-        field.borderStyle = .roundedRect
-        field.font = .preferredFont(forTextStyle: .body)
-        field.adjustsFontForContentSizeCategory = true
-    }
-
     @objc private func loginTapped() {
+        let identifierValid = identifierField.validate()
+        let passwordValid = passwordField.validate()
+        guard identifierValid, passwordValid else { return }
         let identifier = identifierField.text?.trimmingCharacters(in: .whitespaces) ?? ""
         let password = passwordField.text ?? ""
-        guard !identifier.isEmpty, !password.isEmpty else { return }
         enterBusy()
         Task {
             await self.performLogin(identifier: identifier, password: password)
