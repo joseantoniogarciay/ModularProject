@@ -14,6 +14,7 @@ public final class PokemonListViewController: UIViewController {
     private var pokemons: [Pokemon] = []
     private var offset: Int = 0
     private var hasMore: Bool = true
+    private var pageErrorMessage: String?
     private var loadTask: Task<Void, Never>?
 
     private enum Section: Int, CaseIterable {
@@ -56,6 +57,7 @@ public final class PokemonListViewController: UIViewController {
         tableView.translatesAutoresizingMaskIntoConstraints = false
         tableView.register(PokemonCell.self, forCellReuseIdentifier: PokemonCell.reuseID)
         tableView.register(LoaderCell.self, forCellReuseIdentifier: LoaderCell.reuseID)
+        tableView.register(RetryCell.self, forCellReuseIdentifier: RetryCell.reuseID)
         tableView.dataSource = self
         tableView.delegate = self
         tableView.rowHeight = UITableView.automaticDimension
@@ -84,6 +86,7 @@ public final class PokemonListViewController: UIViewController {
         do {
             let batch = try await repository.list(offset: offset, limit: pageSize)
             guard !Task.isCancelled else { return }
+            pageErrorMessage = nil
             appendBatch(batch)
         } catch {
             guard !Task.isCancelled else { return }
@@ -122,8 +125,15 @@ public final class PokemonListViewController: UIViewController {
             tableView.isHidden = true
             retryView.isHidden = false
         } else {
-            presentError(error)
+            pageErrorMessage = messageFor(error)
+            tableView.reloadSections([Section.loader.rawValue], with: .none)
         }
+    }
+
+    private func retryPage() {
+        pageErrorMessage = nil
+        tableView.reloadSections([Section.loader.rawValue], with: .none)
+        loadNext()
     }
 
     private func messageFor(_ error: PokemonListError) -> String {
@@ -131,16 +141,6 @@ public final class PokemonListViewController: UIViewController {
         case .noConnection: return CoreStrings.errorNoConnection
         case .unknown:      return CoreStrings.errorGenericLoading
         }
-    }
-
-    private func presentError(_ error: PokemonListError) {
-        let alert = UIAlertController(
-            title: "Error",
-            message: messageFor(error),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
     }
 }
 
@@ -152,7 +152,7 @@ extension PokemonListViewController: UITableViewDataSource {
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch Section(rawValue: section) {
         case .items: return pokemons.count
-        case .loader: return hasMore ? 1 : 0
+        case .loader: return (hasMore || pageErrorMessage != nil) ? 1 : 0
         case .none: return 0
         }
     }
@@ -166,6 +166,13 @@ extension PokemonListViewController: UITableViewDataSource {
             cell.configure(with: pokemons[indexPath.row], imageLoader: imageLoader)
             return cell
         case .loader:
+            if let message = pageErrorMessage {
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: RetryCell.reuseID, for: indexPath) as? RetryCell else {
+                    return UITableViewCell()
+                }
+                cell.configure(message: message, retryTitle: CoreStrings.retryButtonTitle, onRetry: retryPage)
+                return cell
+            }
             return tableView.dequeueReusableCell(withIdentifier: LoaderCell.reuseID, for: indexPath)
         case .none:
             return UITableViewCell()
@@ -181,7 +188,7 @@ extension PokemonListViewController: UITableViewDelegate {
     }
 
     public func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if Section(rawValue: indexPath.section) == .loader {
+        if Section(rawValue: indexPath.section) == .loader, cell is LoaderCell {
             loadNext()
         }
     }

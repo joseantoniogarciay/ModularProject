@@ -175,9 +175,11 @@ public final class CartViewController: UIViewController {
     }
 
     private func presentAddError(_ message: String) {
-        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        BannerCenter.shared.show(BannerPayload(
+            message: message,
+            style: .error,
+            iconSystemName: "xmark.circle.fill"
+        ))
     }
 
     private func handleLoaded(_ fetched: Cart) {
