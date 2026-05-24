@@ -1,6 +1,10 @@
 import Foundation
 import XCTest
+#if DEV
+@testable import AppDev
+#else
 @testable import App
+#endif
 import Core
 
 // MARK: - Test doubles

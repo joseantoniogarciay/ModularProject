@@ -43,7 +43,7 @@ public struct AuthenticatedNetClient: NetClient {
             return try await perform(authorized)
         } catch let error as NetError {
             guard case let .http(status, _, _) = error, status == 401 else { throw error }
-            let refreshed = try await refresher.refreshTokens()
+            let refreshed = try await refresher.refreshTokens(replacing: accessToken)
             let retried = Self.authorize(request, with: refreshed.accessToken)
             do {
                 return try await perform(retried)

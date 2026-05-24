@@ -6,5 +6,6 @@ let project = Project.framework(
     dependencies: [
         .project(target: "Core", path: "../Core"),
         .external(name: "Alamofire"),
-    ]
+    ],
+    testDependencies: []
 )

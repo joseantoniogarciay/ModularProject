@@ -15,8 +15,14 @@ extension Settings {
     public static let modular: Settings = .settings(base: modularBaseSettings)
 
     public static func modular(addingConditions conditions: String) -> Settings {
+        modular(overriding: ["SWIFT_ACTIVE_COMPILATION_CONDITIONS": "$(inherited) \(conditions)"])
+    }
+
+    /// Like `modular` but merges arbitrary extra keys on top of the shared base.
+    /// Later entries in `overrides` win over the base.
+    public static func modular(overriding overrides: SettingsDictionary) -> Settings {
         var base = modularBaseSettings
-        base["SWIFT_ACTIVE_COMPILATION_CONDITIONS"] = "$(inherited) \(conditions)"
+        for (key, value) in overrides { base[key] = value }
         return .settings(base: base)
     }
 
@@ -24,14 +30,22 @@ extension Settings {
     /// - Code-signing disabled (simulator builds don't need a profile).
     /// - Warnings treated as errors, because the compiler suppresses test-target
     ///   warnings by default and they would otherwise go unnoticed.
-    public static let modularTests: Settings = {
+    public static let modularTests: Settings = modularTests()
+
+    /// Like `modularTests` but also activates extra compilation conditions.
+    /// Use when the test target must mirror a production variant's flags —
+    /// e.g. `AppDevTests` passes `"DEV"` so `#if DEV` import guards resolve correctly.
+    public static func modularTests(addingConditions conditions: String = "") -> Settings {
         var base = modularBaseSettings
         base["CODE_SIGN_IDENTITY"] = ""
         base["CODE_SIGNING_REQUIRED"] = "NO"
         base["CODE_SIGNING_ALLOWED"] = "NO"
         base["SWIFT_TREAT_WARNINGS_AS_ERRORS"] = "YES"
+        if !conditions.isEmpty {
+            base["SWIFT_ACTIVE_COMPILATION_CONDITIONS"] = "$(inherited) \(conditions)"
+        }
         return .settings(base: base)
-    }()
+    }
 }
 
 public extension TargetScript {
@@ -61,6 +75,12 @@ public extension Project {
     ///   - testDependencies: When non-nil, a `<Name>Tests` unit-test target is added whose
     ///     sources live in `Tests/`. Pass `[]` when no extra dependencies are needed beyond
     ///     the framework under test itself.
+    ///
+    /// Scheme strategy: one explicit scheme named `<Name>` is always generated.
+    /// When a test target exists it is wired into that scheme's test action, so
+    /// Tuist does not auto-generate a separate `<Name>Tests` scheme or the
+    /// duplicate `<Name>_<Name>` scheme that appears when no explicit schemes are
+    /// defined.
     static func framework(
         name: String,
         dependencies: [TargetDependency] = [],
@@ -97,10 +117,22 @@ public extension Project {
             )
         }
 
+        let testAction: TestAction? = testDependencies.map { _ in
+            .targets([.testableTarget(target: .target("\(name)Tests"))])
+        }
+
+        let scheme = Scheme.scheme(
+            name: name,
+            buildAction: .buildAction(targets: [.target(name)]),
+            testAction: testAction
+        )
+
         return Project(
             name: name,
+            options: .options(automaticSchemesOptions: .disabled),
             settings: Settings.modular,
-            targets: targets
+            targets: targets,
+            schemes: [scheme]
         )
     }
 }

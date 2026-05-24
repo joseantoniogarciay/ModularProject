@@ -44,8 +44,10 @@ private let devAppDependencies: [TargetDependency] = baseAppDependencies + [
     .external(name: "PulseUI"),
 ]
 
+
 let project = Project(
     name: "App",
+    options: .options(automaticSchemesOptions: .disabled),
     settings: Settings.modular,
     targets: [
         .target(
@@ -60,6 +62,21 @@ let project = Project(
                 .project(target: "Core", path: "../Core"),
             ],
             settings: Settings.modularTests
+        ),
+        // Same Tests/ folder as AppTests — compiled against AppDev.
+        // DEV flag mirrors the host target so #if DEV import guards resolve correctly.
+        .target(
+            name: "AppDevTests",
+            destinations: .iOS,
+            product: .unitTests,
+            bundleId: "com.modular.app.devtests",
+            deploymentTargets: .iOS("17.0"),
+            buildableFolders: ["Tests"],
+            dependencies: [
+                .target(name: "AppDev"),
+                .project(target: "Core", path: "../Core"),
+            ],
+            settings: Settings.modularTests(addingConditions: "DEV")
         ),
         .target(
             name: "App",
@@ -94,6 +111,18 @@ let project = Project(
             scripts: [.swiftLint],
             dependencies: devAppDependencies,
             settings: Settings.modular(addingConditions: "DEV")
+        ),
+    ],
+    schemes: [
+        .scheme(
+            name: "App",
+            buildAction: .buildAction(targets: [.target("App")]),
+            testAction: .targets([.testableTarget(target: .target("AppTests"))])
+        ),
+        .scheme(
+            name: "AppDev",
+            buildAction: .buildAction(targets: [.target("AppDev")]),
+            testAction: .targets([.testableTarget(target: .target("AppDevTests"))])
         ),
     ]
 )
