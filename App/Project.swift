@@ -73,6 +73,18 @@ let project = Project(
             dependencies: [.target(name: "App")],
             settings: Settings.modularUITests(targetName: "App")
         ),
+        // Same UITests/ folder as AppUITests — compiled against AppDev.
+        // DEV flag mirrors the host target so #if DEV guards resolve correctly.
+        .target(
+            name: "AppDevUITests",
+            destinations: .iOS,
+            product: .uiTests,
+            bundleId: "com.modular.app.devuitests",
+            deploymentTargets: .iOS("17.0"),
+            buildableFolders: ["UITests"],
+            dependencies: [.target(name: "AppDev")],
+            settings: Settings.modularUITests(targetName: "AppDev", addingConditions: "DEV")
+        ),
         // Same Tests/ folder as AppTests — compiled against AppDev.
         // DEV flag mirrors the host target so #if DEV import guards resolve correctly.
         .target(
@@ -135,7 +147,10 @@ let project = Project(
         .scheme(
             name: "AppDev",
             buildAction: .buildAction(targets: [.target("AppDev")]),
-            testAction: .targets([.testableTarget(target: .target("AppDevTests"))])
+            testAction: .targets([
+                .testableTarget(target: .target("AppDevTests")),
+                .testableTarget(target: .target("AppDevUITests")),
+            ])
         ),
     ]
 )

@@ -34,14 +34,25 @@ extension Settings {
 
     /// Settings for UI test targets: same base as `modularTests` plus
     /// `TEST_TARGET_NAME` pointing to the app being exercised.
-    /// - Parameter targetName: The Xcode target name of the host app (e.g. `"App"`).
-    public static func modularUITests(targetName: String) -> Settings {
+    ///
+    /// Code signing is intentionally NOT disabled here (unlike `modularTests`).
+    /// UI test runners are separate processes that Xcode must launch and attach its
+    /// debugger to — this requires at least ad-hoc signing. Xcode defaults to `-`
+    /// (ad-hoc) for simulator builds, which is enough. When running from CI via
+    /// `xcodebuild test`, pass `CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO`
+    /// on the command line to suppress signing there.
+    ///
+    /// - Parameters:
+    ///   - targetName: The Xcode target name of the host app (e.g. `"App"` or `"AppDev"`).
+    ///   - conditions: Optional extra compilation conditions to mirror the host variant's flags
+    ///     (e.g. `"DEV"` for `AppDevUITests` so `#if DEV` guards resolve correctly).
+    public static func modularUITests(targetName: String, addingConditions conditions: String = "") -> Settings {
         var base = modularBaseSettings
-        base["CODE_SIGN_IDENTITY"] = ""
-        base["CODE_SIGNING_REQUIRED"] = "NO"
-        base["CODE_SIGNING_ALLOWED"] = "NO"
         base["SWIFT_TREAT_WARNINGS_AS_ERRORS"] = "YES"
         base["TEST_TARGET_NAME"] = .string(targetName)
+        if !conditions.isEmpty {
+            base["SWIFT_ACTIVE_COMPILATION_CONDITIONS"] = "$(inherited) \(conditions)"
+        }
         return .settings(base: base)
     }
 
