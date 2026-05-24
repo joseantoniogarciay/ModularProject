@@ -27,6 +27,7 @@ final class PokemonCell: UITableViewCell {
 
     func configure(with pokemon: Pokemon, imageLoader: any ImageLoader) {
         self.imageLoader = imageLoader
+        accessibilityIdentifier = "pokemon.cell.\(pokemon.name.lowercased())"
         nameLabel.text = pokemon.name.capitalized
         numberLabel.text = String(format: "#%03d", pokemon.id)
         imageLoader.setImage(
