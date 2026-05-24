@@ -44,6 +44,7 @@ final class PokemonCell: UITableViewCell {
         spriteImageView.image = nil
         nameLabel.text = nil
         numberLabel.text = nil
+        accessibilityIdentifier = nil
     }
 
     override func setHighlighted(_ highlighted: Bool, animated: Bool) {
