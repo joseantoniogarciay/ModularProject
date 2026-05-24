@@ -49,6 +49,19 @@ let project = Project(
     settings: Settings.modular,
     targets: [
         .target(
+            name: "AppTests",
+            destinations: .iOS,
+            product: .unitTests,
+            bundleId: "com.modular.app.tests",
+            deploymentTargets: .iOS("17.0"),
+            buildableFolders: ["Tests"],
+            dependencies: [
+                .target(name: "App"),
+                .project(target: "Core", path: "../Core"),
+            ],
+            settings: Settings.modularTests
+        ),
+        .target(
             name: "App",
             destinations: .iOS,
             product: .app,

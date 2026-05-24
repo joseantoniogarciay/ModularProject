@@ -3,5 +3,6 @@ import ProjectDescriptionHelpers
 
 let project = Project.framework(
     name: "SharedUI",
-    resources: ["Resources/**"]
+    resources: ["Resources/**"],
+    testDependencies: []
 )

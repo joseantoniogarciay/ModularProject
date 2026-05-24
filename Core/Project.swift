@@ -3,5 +3,6 @@ import ProjectDescriptionHelpers
 
 let project = Project.framework(
     name: "Core",
-    resources: ["Resources/**"]
+    resources: ["Resources/**"],
+    testDependencies: []
 )
