@@ -69,6 +69,7 @@ public final class PokemonDetailViewController: UIViewController {
 
     private func setupUI() {
         scrollView.backgroundColor = SharedUIAsset.background.color
+        scrollView.accessibilityIdentifier = "pokemon.detail.scroll"
         view.addSubview(scrollView)
         scrollView.pinEdges(to: view)
 
@@ -111,6 +112,7 @@ public final class PokemonDetailViewController: UIViewController {
         statsHeaderLabel.font = .preferredFont(forTextStyle: .headline)
         statsHeaderLabel.adjustsFontForContentSizeCategory = true
         statsHeaderLabel.numberOfLines = 0
+        statsHeaderLabel.accessibilityIdentifier = "pokemon.detail.stats-header"
         stackView.addArrangedSubview(statsHeaderLabel)
         stackView.setCustomSpacing(10, after: statsHeaderLabel)
 
@@ -120,11 +122,16 @@ public final class PokemonDetailViewController: UIViewController {
         stackView.addArrangedSubview(statsStackView)
 
         activityIndicator.hidesWhenStopped = true
+        activityIndicator.accessibilityIdentifier = "pokemon.detail.loading"
         activityIndicator.startAnimating()
         stackView.addArrangedSubview(activityIndicator)
 
         retryView.delegate = self
         retryView.isHidden = true
+        retryView.setAccessibilityIdentifiers(
+            container: "pokemon.detail.retry",
+            button: "pokemon.detail.retry.button"
+        )
         view.addSubview(retryView)
         retryView.pinEdges(to: view)
     }

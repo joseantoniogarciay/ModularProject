@@ -4,6 +4,7 @@ public protocol RetryViewDelegate: AnyObject {
     func retryViewDidTapRetry(_ retryView: RetryView)
 }
 
+@MainActor
 public final class RetryView: UIView {
     public weak var delegate: (any RetryViewDelegate)?
 
@@ -23,6 +24,13 @@ public final class RetryView: UIView {
     public func configure(message: String, retryTitle: String = "Try again") {
         messageLabel.text = message
         retryButton.setTitle(retryTitle, for: .normal)
+    }
+
+    /// Stamps accessibility identifiers on this view and its retry button so UI tests
+    /// can find both the container and the interactive control independently.
+    public func setAccessibilityIdentifiers(container: String, button: String) {
+        accessibilityIdentifier = container
+        retryButton.accessibilityIdentifier = button
     }
 
     private func setupViews() {

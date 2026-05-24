@@ -16,8 +16,15 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         self.window = window
 
         #if DEBUG
-        let isUITesting = ProcessInfo.processInfo.arguments.contains("--uitesting")
-        let dependencies = isUITesting ? AppDependencies.uitesting() : AppDependencies.live()
+        let args = ProcessInfo.processInfo.arguments
+        let dependencies: AppDependencies
+        if args.contains("--uitesting-list-error") {
+            dependencies = AppDependencies.uitestingWithListError()
+        } else if args.contains("--uitesting") {
+            dependencies = AppDependencies.uitesting()
+        } else {
+            dependencies = AppDependencies.live()
+        }
         #else
         let dependencies = AppDependencies.live()
         #endif

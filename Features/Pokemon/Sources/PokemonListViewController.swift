@@ -82,6 +82,7 @@ public final class PokemonListViewController: UIViewController {
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 108
         tableView.separatorStyle = .none
+        tableView.accessibilityIdentifier = "pokemon.list.table"
         tableView.backgroundColor = SharedUIAsset.background.color
 
         view.addSubview(tableView)
@@ -89,6 +90,10 @@ public final class PokemonListViewController: UIViewController {
 
         retryView.delegate = self
         retryView.isHidden = true
+        retryView.setAccessibilityIdentifiers(
+            container: "pokemon.list.retry",
+            button: "pokemon.list.retry.button"
+        )
         view.addSubview(retryView)
         retryView.pinEdges(to: view)
     }
