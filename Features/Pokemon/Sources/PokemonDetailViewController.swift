@@ -83,6 +83,7 @@ public final class PokemonDetailViewController: UIViewController {
 
         spriteImageView.contentMode = .scaleAspectFit
         spriteImageView.tintColor = SharedUIAsset.secondaryText.color
+        spriteImageView.isAccessibilityElement = false
         spriteImageView.translatesAutoresizingMaskIntoConstraints = false
         spriteImageView.heightAnchor.constraint(equalToConstant: 200).isActive = true
         stackView.addArrangedSubview(spriteImageView)
@@ -109,6 +110,7 @@ public final class PokemonDetailViewController: UIViewController {
         statsHeaderLabel.text = "Base Stats"
         statsHeaderLabel.font = .preferredFont(forTextStyle: .headline)
         statsHeaderLabel.adjustsFontForContentSizeCategory = true
+        statsHeaderLabel.numberOfLines = 0
         stackView.addArrangedSubview(statsHeaderLabel)
         stackView.setCustomSpacing(10, after: statsHeaderLabel)
 
@@ -161,6 +163,8 @@ public final class PokemonDetailViewController: UIViewController {
     }
 
     private func render(_ detail: PokemonDetail) {
+        title = detail.name.capitalized
+
         if let url = detail.imageURL {
             imageLoader.setImage(url, placeholder: spriteImageView.image, on: spriteImageView)
         }
@@ -223,8 +227,9 @@ extension PokemonDetailViewController: RetryViewDelegate {
 
 private extension PokemonDetailViewController {
     func makeTypeBadge(_ type: String) -> UIView {
+        let background = typeColor(for: type)
         let badge = UIView()
-        badge.backgroundColor = typeColor(for: type)
+        badge.backgroundColor = background
         badge.layer.cornerRadius = 10
         badge.layer.cornerCurve = .continuous
 
@@ -233,7 +238,7 @@ private extension PokemonDetailViewController {
         let base = UIFont.systemFont(ofSize: 12, weight: .semibold)
         label.font = UIFontMetrics(forTextStyle: .caption1).scaledFont(for: base)
         label.adjustsFontForContentSizeCategory = true
-        label.textColor = .white
+        label.textColor = contrastingTextColor(on: background)
         label.translatesAutoresizingMaskIntoConstraints = false
 
         badge.addSubview(label)
@@ -265,6 +270,7 @@ private extension PokemonDetailViewController {
         valueLabel.text = value
         valueLabel.font = .preferredFont(forTextStyle: .headline)
         valueLabel.adjustsFontForContentSizeCategory = true
+        valueLabel.numberOfLines = 0
         valueLabel.textAlignment = .center
         valueLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -273,6 +279,7 @@ private extension PokemonDetailViewController {
         titleLabel.font = .preferredFont(forTextStyle: .caption1)
         titleLabel.textColor = SharedUIAsset.secondaryText.color
         titleLabel.adjustsFontForContentSizeCategory = true
+        titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -289,6 +296,9 @@ private extension PokemonDetailViewController {
             vStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
             vStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
         ])
+
+        card.isAccessibilityElement = true
+        card.accessibilityLabel = "\(title), \(value)"
         return card
     }
 
@@ -298,17 +308,19 @@ private extension PokemonDetailViewController {
         nameLabel.font = .preferredFont(forTextStyle: .caption1)
         nameLabel.textColor = SharedUIAsset.secondaryText.color
         nameLabel.adjustsFontForContentSizeCategory = true
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.widthAnchor.constraint(equalToConstant: 68).isActive = true
+        nameLabel.numberOfLines = 0
+        nameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let valueLabel = UILabel()
         valueLabel.text = "\(stat.baseValue)"
         valueLabel.font = .preferredFont(forTextStyle: .caption1)
         valueLabel.textColor = SharedUIAsset.secondaryText.color
         valueLabel.adjustsFontForContentSizeCategory = true
+        valueLabel.numberOfLines = 0
         valueLabel.textAlignment = .right
-        valueLabel.translatesAutoresizingMaskIntoConstraints = false
-        valueLabel.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        valueLabel.setContentHuggingPriority(.required, for: .horizontal)
+        valueLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         let trackView = UIView()
         trackView.backgroundColor = SharedUIAsset.statTrack.color
@@ -330,11 +342,32 @@ private extension PokemonDetailViewController {
             trackView.heightAnchor.constraint(equalToConstant: 6),
         ])
 
-        let row = UIStackView(arrangedSubviews: [nameLabel, trackView, valueLabel])
-        row.axis = .horizontal
-        row.alignment = .center
-        row.spacing = 8
-        return row
+        let header = UIStackView(arrangedSubviews: [nameLabel, valueLabel])
+        header.axis = .horizontal
+        header.spacing = 12
+        header.alignment = .firstBaseline
+
+        let inner = UIStackView(arrangedSubviews: [header, trackView])
+        inner.axis = .vertical
+        inner.spacing = 8
+        inner.alignment = .fill
+        inner.translatesAutoresizingMaskIntoConstraints = false
+
+        let box = UIView()
+        box.backgroundColor = SharedUIAsset.cardBackground.color
+        box.layer.cornerRadius = 10
+        box.layer.cornerCurve = .continuous
+        box.addSubview(inner)
+        NSLayoutConstraint.activate([
+            inner.topAnchor.constraint(equalTo: box.topAnchor, constant: 10),
+            inner.bottomAnchor.constraint(equalTo: box.bottomAnchor, constant: -10),
+            inner.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
+            inner.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
+        ])
+
+        box.isAccessibilityElement = true
+        box.accessibilityLabel = "\(displayName(for: stat.name)), \(stat.baseValue)"
+        return box
     }
 }
 
@@ -364,6 +397,19 @@ private extension PokemonDetailViewController {
 
     func typeColor(for type: String) -> UIColor {
         Self.typeColors[type.lowercased()] ?? .systemGray
+    }
+
+    // WCAG relative luminance — picks black on light backgrounds, white on dark.
+    // Threshold 0.5 keeps the chip readable on yellow/pale-cyan/pale-pink type colors
+    // where solid white would fail WCAG AA contrast.
+    func contrastingTextColor(on background: UIColor) -> UIColor {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        background.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        let toLinear: (CGFloat) -> CGFloat = { channel in
+            channel <= 0.03928 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
+        }
+        let luminance = 0.2126 * toLinear(red) + 0.7152 * toLinear(green) + 0.0722 * toLinear(blue)
+        return luminance > 0.5 ? .black : .white
     }
 
     func barColor(for value: Int) -> UIColor {

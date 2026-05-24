@@ -46,6 +46,7 @@ final class LoggedOutViewController: UIViewController {
     private func configureViews() {
         logoView.image = SharedUIAsset.logo.image
         logoView.contentMode = .scaleAspectFit
+        logoView.isAccessibilityElement = false
         logoView.translatesAutoresizingMaskIntoConstraints = false
 
         titleLabel.text = CoreStrings.accountLoggedOutTitle

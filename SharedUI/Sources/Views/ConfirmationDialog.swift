@@ -89,6 +89,7 @@ public final class ConfirmationDialogViewController: UIViewController {
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.tintColor = SharedUIAsset.text.color
+        iconImageView.isAccessibilityElement = false
 
         titleLabel.font = .preferredFont(forTextStyle: .title3)
         titleLabel.adjustsFontForContentSizeCategory = true

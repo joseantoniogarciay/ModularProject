@@ -69,8 +69,8 @@ final class AccountViewController: UIViewController {
             presentBanner(for: reason)
         case .authenticated(let user):
             let logoutItem = UIBarButtonItem(
-                image: UIImage(systemName: "rectangle.portrait.and.arrow.right"),
-                style: .plain,
+                symbolName: "rectangle.portrait.and.arrow.right",
+                accessibilityLabel: CoreStrings.accountLogoutButton,
                 target: self,
                 action: #selector(logoutTapped)
             )
@@ -148,6 +148,19 @@ final class AccountViewController: UIViewController {
         child.view.alpha = 0
         currentChild = child
 
+        let finalize = {
+            outgoing.view.removeFromSuperview()
+            outgoing.removeFromParent()
+            child.didMove(toParent: self)
+        }
+
+        guard !UIAccessibility.isReduceMotionEnabled else {
+            child.view.alpha = 1
+            outgoing.view.alpha = 0
+            finalize()
+            return
+        }
+
         UIView.animate(
             withDuration: 0.25,
             delay: 0,
@@ -156,11 +169,7 @@ final class AccountViewController: UIViewController {
                 child.view.alpha = 1
                 outgoing.view.alpha = 0
             },
-            completion: { _ in
-                outgoing.view.removeFromSuperview()
-                outgoing.removeFromParent()
-                child.didMove(toParent: self)
-            }
+            completion: { _ in finalize() }
         )
     }
 }

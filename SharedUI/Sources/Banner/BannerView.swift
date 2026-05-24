@@ -133,11 +133,12 @@ public final class BannerView: UIView {
 
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         iconImageView.contentMode = .scaleAspectFit
+        iconImageView.isAccessibilityElement = false
         iconImageView.isHidden = true
 
         titleLabel.font = .preferredFont(forTextStyle: .headline)
         titleLabel.adjustsFontForContentSizeCategory = true
-        titleLabel.numberOfLines = 1
+        titleLabel.numberOfLines = 0
         titleLabel.isHidden = true
 
         messageLabel.font = .preferredFont(forTextStyle: .footnote)

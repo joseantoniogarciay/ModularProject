@@ -1,5 +1,8 @@
 "welcome_title" = "Bienvenido";
 
+"accessibility_change_appearance" = "Cambiar apariencia";
+"accessibility_notify_me" = "Notificarme";
+
 "error_no_connection" = "Sin conexión a internet. Comprueba tu red e inténtalo de nuevo.";
 "error_generic_loading" = "Algo salió mal al cargar el contenido. Inténtalo de nuevo.";
 "retry_button_title" = "Reintentar";

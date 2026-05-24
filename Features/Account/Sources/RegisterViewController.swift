@@ -51,6 +51,7 @@ final class RegisterViewController: UIViewController {
     private func configureViews() {
         logoView.image = SharedUIAsset.logo.image
         logoView.contentMode = .scaleAspectFit
+        logoView.isAccessibilityElement = false
         logoView.translatesAutoresizingMaskIntoConstraints = false
 
         titleLabel.text = CoreStrings.accountRegisterScreenTitle

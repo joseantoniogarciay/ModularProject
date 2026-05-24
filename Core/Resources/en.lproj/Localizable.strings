@@ -1,5 +1,8 @@
 "welcome_title" = "Welcome";
 
+"accessibility_change_appearance" = "Change appearance";
+"accessibility_notify_me" = "Notify me";
+
 "error_no_connection" = "No internet connection. Check your network and try again.";
 "error_generic_loading" = "Something went wrong loading the content. Please try again.";
 "retry_button_title" = "Try again";

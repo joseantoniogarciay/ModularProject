@@ -6,10 +6,11 @@ import UIKit
 final class KingfisherImageLoader: ImageLoader {
     func setImage(_ url: URL?, placeholder: UIImage?, on imageView: UIImageView) {
         imageView.kf.indicatorType = .activity
+        let transition: ImageTransition = UIAccessibility.isReduceMotionEnabled ? .none : .fade(0.25)
         imageView.kf.setImage(
             with: url,
             placeholder: nil,
-            options: [.transition(.fade(0.25))]
+            options: [.transition(transition)]
         ) { [weak imageView] result in
             if case .failure = result {
                 imageView?.image = placeholder

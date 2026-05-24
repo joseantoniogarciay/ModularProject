@@ -1,6 +1,7 @@
 import Core
 import SharedUI
 import UIKit
+import UserNotifications
 
 @MainActor
 public final class PokemonListViewController: UIViewController {
@@ -58,12 +59,18 @@ public final class PokemonListViewController: UIViewController {
         view.backgroundColor = SharedUIAsset.background.color
 
         let themeButton = UIBarButtonItem(
-            image: UIImage(systemName: themeStore.current.systemImageName),
-            style: .plain,
+            symbolName: themeStore.current.systemImageName,
+            accessibilityLabel: CoreStrings.accessibilityChangeAppearance,
             target: self,
             action: #selector(themeButtonTapped)
         )
-        navigationItem.rightBarButtonItem = themeButton
+        let notificationButton = UIBarButtonItem(
+            symbolName: "bell.badge",
+            accessibilityLabel: CoreStrings.accessibilityNotifyMe,
+            target: self,
+            action: #selector(notificationButtonTapped)
+        )
+        navigationItem.rightBarButtonItems = [themeButton, notificationButton]
         themeBarButton = themeButton
 
         tableView.translatesAutoresizingMaskIntoConstraints = false
@@ -222,6 +229,33 @@ extension PokemonListViewController {
         themeStore.set(next)
         themeBarButton?.image = UIImage(systemName: next.systemImageName)
         view.window?.overrideUserInterfaceStyle = next.uiStyle
+    }
+
+    @objc private func notificationButtonTapped() {
+        Task { await scheduleMewtwoNotification() }
+    }
+
+    private func scheduleMewtwoNotification() async {
+        let center = UNUserNotificationCenter.current()
+        do {
+            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+            guard granted else { return }
+        } catch {
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = "A wild Pokémon appears"
+        content.body = "Tap to meet #151."
+        content.sound = .default
+        content.userInfo = ["pokemon_id": 151]
+
+        let request = UNNotificationRequest(
+            identifier: "pokemon.detail.151",
+            content: content,
+            trigger: nil
+        )
+        try? await center.add(request)
     }
 }
 

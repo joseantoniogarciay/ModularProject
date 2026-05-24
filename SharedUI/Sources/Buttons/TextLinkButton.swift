@@ -5,6 +5,7 @@ public final class TextLinkButton: UIButton {
     public override init(frame: CGRect) {
         super.init(frame: frame)
         titleLabel?.adjustsFontForContentSizeCategory = true
+        accessibilityTraits = [.link]
     }
 
     @available(*, unavailable)

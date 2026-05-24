@@ -47,11 +47,16 @@ final class PokemonCell: UITableViewCell {
 
     override func setHighlighted(_ highlighted: Bool, animated: Bool) {
         super.setHighlighted(highlighted, animated: animated)
-        UIView.animate(withDuration: 0.12) {
+        let apply = {
             self.cardView.alpha = highlighted ? 0.75 : 1.0
             self.cardView.transform = highlighted
                 ? CGAffineTransform(scaleX: 0.97, y: 0.97)
                 : .identity
+        }
+        if animated, !UIAccessibility.isReduceMotionEnabled {
+            UIView.animate(withDuration: 0.12, animations: apply)
+        } else {
+            apply()
         }
     }
 
@@ -80,6 +85,7 @@ final class PokemonCell: UITableViewCell {
 
         spriteImageView.contentMode = .scaleAspectFit
         spriteImageView.tintColor = SharedUIAsset.secondaryText.color
+        spriteImageView.isAccessibilityElement = false
         spriteImageView.pinSize(72)
 
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -95,6 +101,7 @@ final class PokemonCell: UITableViewCell {
         chevron.translatesAutoresizingMaskIntoConstraints = false
         chevron.tintColor = SharedUIAsset.secondaryText.color
         chevron.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .caption1)
+        chevron.isAccessibilityElement = false
         chevron.setContentHuggingPriority(.required, for: .horizontal)
 
         contentView.addSubview(cardView)
