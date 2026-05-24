@@ -7,6 +7,9 @@ public final class PrimaryButton: UIButton {
             guard oldValue != isLoading else { return }
             configuration?.showsActivityIndicator = isLoading
             isUserInteractionEnabled = !isLoading
+            // UIButton.Configuration can clear isAccessibilityElement when showing a spinner.
+            // Explicitly maintain it so VoiceOver announces "Continue, dimmed" during loading.
+            isAccessibilityElement = true
         }
     }
 

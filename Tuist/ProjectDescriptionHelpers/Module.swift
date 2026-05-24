@@ -32,6 +32,19 @@ extension Settings {
     ///   warnings by default and they would otherwise go unnoticed.
     public static let modularTests: Settings = modularTests()
 
+    /// Settings for UI test targets: same base as `modularTests` plus
+    /// `TEST_TARGET_NAME` pointing to the app being exercised.
+    /// - Parameter targetName: The Xcode target name of the host app (e.g. `"App"`).
+    public static func modularUITests(targetName: String) -> Settings {
+        var base = modularBaseSettings
+        base["CODE_SIGN_IDENTITY"] = ""
+        base["CODE_SIGNING_REQUIRED"] = "NO"
+        base["CODE_SIGNING_ALLOWED"] = "NO"
+        base["SWIFT_TREAT_WARNINGS_AS_ERRORS"] = "YES"
+        base["TEST_TARGET_NAME"] = .string(targetName)
+        return .settings(base: base)
+    }
+
     /// Like `modularTests` but also activates extra compilation conditions.
     /// Use when the test target must mirror a production variant's flags —
     /// e.g. `AppDevTests` passes `"DEV"` so `#if DEV` import guards resolve correctly.

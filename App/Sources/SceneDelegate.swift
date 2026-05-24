@@ -15,7 +15,12 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let window = UIWindow(windowScene: windowScene)
         self.window = window
 
+        #if DEBUG
+        let isUITesting = ProcessInfo.processInfo.arguments.contains("--uitesting")
+        let dependencies = isUITesting ? AppDependencies.uitesting() : AppDependencies.live()
+        #else
         let dependencies = AppDependencies.live()
+        #endif
         window.overrideUserInterfaceStyle = dependencies.themeStore.current.uiStyle
 
         let coordinator = AppRootCoordinator(

@@ -271,6 +271,118 @@ Schemes with test targets in this project: `Core` (→ CoreTests), `SharedUITest
 
 ---
 
+---
+
+## Accessibility testing — which layer to use
+
+### Decision guide
+
+| What you want to verify | Where |
+|---|---|
+| Component contracts: height constraint, `adjustsFontForContentSizeCategory`, `numberOfLines = 0`, specific state behaviour (loading → `isAccessibilityElement`) | **Unit test** (`SharedUI/Tests/`) |
+| Full screen audit: contrast, VoiceOver order, hit regions, Dynamic Type, element descriptions across all elements | **UI test** (`App/UITests/`) |
+
+"Testing accessibility" does NOT mean verifying that `accessibilityLabel` is non-empty on a button with a title — UIKit does that for free. Test the properties that are explicitly set in the code and can regress silently.
+
+### Unit test pattern for UI components
+
+Use a local `UIWindow` as the trait environment. No `setUp`/`tearDown` — one factory per test method to avoid shared state:
+
+```swift
+// SharedUI/Tests/Accessibility/PrimaryButtonAccessibilityTests.swift
+final class PrimaryButtonAccessibilityTests: XCTestCase {
+
+    @MainActor
+    func testHeightMeetsMinimumHitRegion() {
+        let (window, vc, button) = makeScene(title: "Continue")
+        vc.view.layoutIfNeeded()
+        _ = window   // keeps window alive for the duration of the test
+
+        XCTAssertGreaterThanOrEqual(button.frame.height, 44)
+    }
+
+    @MainActor
+    private func makeScene(title: String) -> (UIWindow, UIViewController, PrimaryButton) {
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        window.makeKeyAndVisible()
+        let vc = UIViewController()
+        window.rootViewController = vc
+        let button = PrimaryButton()
+        button.setTitle(title, for: .normal)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        vc.view.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.centerYAnchor.constraint(equalTo: vc.view.centerYAnchor),
+            button.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor, constant: 24),
+            button.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor, constant: -24),
+        ])
+        return (window, vc, button)
+    }
+}
+```
+
+Why local window and not `setUp`/`tearDown`: `UIWindow.init` is `@MainActor`, and `setUp`/`tearDown` are `nonisolated`, which forces `nonisolated(unsafe)` + `MainActor.assumeIsolated`. The local window pattern avoids all of that — each test is fully self-contained.
+
+To simulate AX5: `vc.view.traitOverrides.preferredContentSizeCategory = .accessibilityExtraExtraExtraLarge` before `layoutIfNeeded()`.
+
+For checking Dynamic Type font: `label.font.fontDescriptor.object(forKey: .textStyle) != nil` proves the font was created with `preferredFont(forTextStyle:)` rather than `systemFont(ofSize:)`.
+
+To filter button title labels (expected single-line): `UIView+Testing.swift` in the test target exposes `isInsideButton` and `findSubviews(ofType:)`.
+
+### UI test pattern for full screen audit
+
+```swift
+// App/UITests/Accessibility/PokemonListAccessibilityTests.swift
+final class PokemonListAccessibilityTests: XCTestCase {
+
+    // Invariant: accessed exclusively from @MainActor test methods and setUp/tearDown
+    // (XCTest guarantees main thread). Removal plan: remove once XCTest is @MainActor.
+    nonisolated(unsafe) var app: XCUIApplication!
+
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+        let application = MainActor.assumeIsolated {
+            let a = XCUIApplication()
+            a.launchArguments = ["--uitesting"]   // activates AppDependencies.uitesting()
+            a.launch()
+            return a
+        }
+        app = application
+    }
+
+    override func tearDown() {
+        let application = app   // local var — do NOT capture self in the closure
+        MainActor.assumeIsolated { application?.terminate() }
+        app = nil
+        super.tearDown()
+    }
+
+    @MainActor
+    func testPokemonListPassesAccessibilityAudit() throws {
+        let table = app.tables.firstMatch
+        XCTAssertTrue(table.waitForExistence(timeout: 3))
+
+        // Use issueHandler to exclude known issues with a TODO:
+        try app.performAccessibilityAudit { issue in
+            // TODO: Fix PokemonCell nameLabel clipping — remove once layout is updated.
+            issue.auditType == .textClipped
+        }
+    }
+}
+```
+
+The `--uitesting` launch argument activates `AppDependencies.uitesting()` in `SceneDelegate` (`#if DEBUG` guard). This swaps all network repositories for in-memory stubs (`PreviewPokemonRepository`, `UITestCartRepository`, etc.) so the tests run without a server and finish in ~5 s.
+
+### Adding a new screen audit
+
+1. Create `App/UITests/Accessibility/<ScreenName>AccessibilityTests.swift`.
+2. Follow the pattern above (no new infrastructure needed — `tuist generate` is NOT required for new files under `UITests/`).
+3. Add one `testXxxPassesAccessibilityAudit()` test per screen state (list loaded, error state, empty state if applicable).
+4. If the audit finds violations, fix them. If a fix is deferred, add an `issueHandler` exclusion with a `// TODO:` that names the file, property, and fix needed. Never suppress without explanation.
+
+---
+
 ## Checklist before shipping a new test file
 
 - [ ] Tests exercise logic, not structure. If all assertions would pass even with a broken implementation, delete the test.

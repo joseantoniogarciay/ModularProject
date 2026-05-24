@@ -88,27 +88,38 @@ final class PokemonCell: UITableViewCell {
         spriteImageView.isAccessibilityElement = false
         spriteImageView.pinSize(72)
 
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        // numberOfLines = 0 lets the name wrap at large content sizes instead of clipping.
         nameLabel.font = .preferredFont(forTextStyle: .headline)
         nameLabel.adjustsFontForContentSizeCategory = true
+        nameLabel.numberOfLines = 0
 
-        numberLabel.translatesAutoresizingMaskIntoConstraints = false
         numberLabel.font = .preferredFont(forTextStyle: .caption1)
         numberLabel.textColor = SharedUIAsset.secondaryText.color
         numberLabel.adjustsFontForContentSizeCategory = true
 
         let chevron = UIImageView(image: UIImage(systemName: "chevron.right"))
-        chevron.translatesAutoresizingMaskIntoConstraints = false
         chevron.tintColor = SharedUIAsset.secondaryText.color
         chevron.preferredSymbolConfiguration = UIImage.SymbolConfiguration(textStyle: .caption1)
         chevron.isAccessibilityElement = false
         chevron.setContentHuggingPriority(.required, for: .horizontal)
 
+        // Vertical stack for name + number — grows naturally with Dynamic Type.
+        let textStack = UIStackView(arrangedSubviews: [nameLabel, numberLabel])
+        textStack.axis = .vertical
+        textStack.alignment = .leading
+        textStack.spacing = 2
+
+        // Horizontal stack: [sprite | textStack | chevron], all centered on the same axis.
+        // UIStackView.alignment = .center keeps the sprite and chevron mid-aligned as text grows.
+        let outerStack = UIStackView(arrangedSubviews: [spriteImageView, textStack, chevron])
+        outerStack.axis = .horizontal
+        outerStack.alignment = .center
+        outerStack.translatesAutoresizingMaskIntoConstraints = false
+        outerStack.setCustomSpacing(14, after: spriteImageView)
+        outerStack.setCustomSpacing(8, after: textStack)
+
         contentView.addSubview(cardView)
-        cardView.addSubview(spriteImageView)
-        cardView.addSubview(nameLabel)
-        cardView.addSubview(numberLabel)
-        cardView.addSubview(chevron)
+        cardView.addSubview(outerStack)
 
         NSLayoutConstraint.activate([
             cardView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
@@ -116,21 +127,10 @@ final class PokemonCell: UITableViewCell {
             cardView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             cardView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
 
-            spriteImageView.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 12),
-            spriteImageView.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
-            spriteImageView.topAnchor.constraint(greaterThanOrEqualTo: cardView.topAnchor, constant: 12),
-            spriteImageView.bottomAnchor.constraint(lessThanOrEqualTo: cardView.bottomAnchor, constant: -12),
-
-            nameLabel.leadingAnchor.constraint(equalTo: spriteImageView.trailingAnchor, constant: 14),
-            nameLabel.trailingAnchor.constraint(equalTo: chevron.leadingAnchor, constant: -8),
-            nameLabel.bottomAnchor.constraint(equalTo: cardView.centerYAnchor, constant: -1),
-
-            numberLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
-            numberLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
-            numberLabel.topAnchor.constraint(equalTo: cardView.centerYAnchor, constant: 2),
-
-            chevron.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
-            chevron.centerYAnchor.constraint(equalTo: cardView.centerYAnchor),
+            outerStack.topAnchor.constraint(equalTo: cardView.topAnchor, constant: 12),
+            outerStack.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -12),
+            outerStack.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: 12),
+            outerStack.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -16),
         ])
     }
 }
