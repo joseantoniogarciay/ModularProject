@@ -4,6 +4,11 @@ import XCTest
 ///
 /// Encapsulates all XCUI element queries and gestures for this screen.
 /// Test methods must call Page Object APIs only — no raw XCUIElement access in test code.
+///
+/// `@MainActor` is required because all `XCUIApplication` properties and methods are
+/// main-actor-isolated under Swift 6 strict concurrency. Page Object instances are
+/// created and used exclusively from `@MainActor`-annotated test methods.
+@MainActor
 struct PokemonListScreen {
     private let app: XCUIApplication
 
