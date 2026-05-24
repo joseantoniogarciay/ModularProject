@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import SharedUI
+@testable import Core
 
 final class TextFieldValidatorsTests: XCTestCase {
 

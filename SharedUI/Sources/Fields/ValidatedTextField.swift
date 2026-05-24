@@ -1,7 +1,5 @@
 import UIKit
 
-public typealias TextFieldValidator = (String) -> String?
-
 @MainActor
 public final class ValidatedTextField: UIView {
     public let textField = UITextField()
@@ -9,11 +7,11 @@ public final class ValidatedTextField: UIView {
     private let errorLabel = UILabel()
     private let innerStack: UIStackView
 
-    private let validators: [TextFieldValidator]
+    private let validators: [(String) -> String?]
 
     public var text: String? { textField.text }
 
-    public init(placeholder: String, validators: [TextFieldValidator] = []) {
+    public init(placeholder: String, validators: [(String) -> String?] = []) {
         self.validators = validators
         self.innerStack = UIStackView()
         super.init(frame: .zero)
