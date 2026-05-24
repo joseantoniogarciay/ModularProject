@@ -1,4 +1,3 @@
-#if DEV
 import UIKit
 
 extension UIApplication {
@@ -24,4 +23,3 @@ extension UIApplication {
         return controller
     }
 }
-#endif

@@ -4,6 +4,7 @@ import UIKit
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
     private var rootCoordinator: AppRootCoordinator?
+    private var pushRouter: PushNotificationRouter?
 
     func scene(
         _ scene: UIScene,
@@ -23,6 +24,8 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         )
         rootCoordinator = coordinator
         coordinator.start()
+
+        pushRouter = PushNotificationRouter(dependencies: dependencies)
     }
 }
 
