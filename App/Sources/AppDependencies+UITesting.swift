@@ -20,6 +20,19 @@ extension AppDependencies {
             themeStore: UserDefaultsThemeStore()
         )
     }
+
+    /// Returns dependencies where `pokemonRepository` always fails with `.noConnection`.
+    /// Activated by `--uitesting-list-error` in `XCUIApplication.launchArguments`.
+    static func uitestingWithListError() -> AppDependencies {
+        AppDependencies(
+            pokemonRepository: UITestErrorPokemonRepository(),
+            imageLoader: PreviewImageLoader(),
+            authSession: UITestAuthSession(),
+            cartRepository: UITestCartRepository(),
+            productsRepository: UITestProductsRepository(),
+            themeStore: UserDefaultsThemeStore()
+        )
+    }
 }
 
 // MARK: - Stubs
@@ -43,5 +56,17 @@ private struct UITestCartRepository: CartRepository {
 
 private struct UITestProductsRepository: ProductsRepository {
     func list() async throws(ProductsListError) -> [Product] { [] }
+}
+
+/// Repository that always throws `.noConnection` — used by `--uitesting-list-error`
+/// to exercise the full-screen error state in PokemonListViewController.
+private struct UITestErrorPokemonRepository: PokemonRepository {
+    func list(offset: Int, limit: Int) async throws(PokemonListError) -> [Pokemon] {
+        throw .noConnection
+    }
+
+    func detail(id: Int) async throws(PokemonDetailError) -> PokemonDetail {
+        throw .noConnection
+    }
 }
 #endif
