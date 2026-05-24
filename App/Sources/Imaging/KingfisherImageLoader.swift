@@ -6,7 +6,11 @@ import UIKit
 final class KingfisherImageLoader: ImageLoader {
     func setImage(_ url: URL?, placeholder: UIImage?, on imageView: UIImageView) {
         imageView.kf.indicatorType = .activity
-        imageView.kf.setImage(with: url, placeholder: nil) { [weak imageView] result in
+        imageView.kf.setImage(
+            with: url,
+            placeholder: nil,
+            options: [.transition(.fade(0.25))]
+        ) { [weak imageView] result in
             if case .failure = result {
                 imageView?.image = placeholder
             }
