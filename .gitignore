@@ -3,7 +3,6 @@
 **/*.xcodeproj
 **/*.xcworkspace
 .build/
-graph.png
 
 # Xcode
 xcuserdata/
