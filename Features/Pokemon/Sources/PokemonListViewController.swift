@@ -1,13 +1,13 @@
 import Core
 import SharedUI
 import UIKit
-import UserNotifications
 
 @MainActor
 public final class PokemonListViewController: UIViewController {
     private let repository: any PokemonRepository
     private let imageLoader: any ImageLoader
     private let themeStore: any ThemeStore
+    private let notificationScheduler: any LocalNotificationScheduling
     private let onSelect: @MainActor (Pokemon) -> Void
     private let pageSize: Int
 
@@ -29,12 +29,14 @@ public final class PokemonListViewController: UIViewController {
         repository: any PokemonRepository,
         imageLoader: any ImageLoader,
         themeStore: any ThemeStore,
+        notificationScheduler: any LocalNotificationScheduling,
         pageSize: Int = 30,
         onSelect: @escaping @MainActor (Pokemon) -> Void
     ) {
         self.repository = repository
         self.imageLoader = imageLoader
         self.themeStore = themeStore
+        self.notificationScheduler = notificationScheduler
         self.pageSize = pageSize
         self.onSelect = onSelect
         super.init(nibName: nil, bundle: nil)
@@ -241,26 +243,15 @@ extension PokemonListViewController {
     }
 
     private func scheduleMewtwoNotification() async {
-        let center = UNUserNotificationCenter.current()
-        do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            guard granted else { return }
-        } catch {
-            return
-        }
-
-        let content = UNMutableNotificationContent()
-        content.title = "A wild Pokémon appears"
-        content.body = "Tap to meet #151."
-        content.sound = .default
-        content.userInfo = ["pokemon_id": 151]
-
-        let request = UNNotificationRequest(
-            identifier: "pokemon.detail.151",
-            content: content,
-            trigger: nil
+        guard await notificationScheduler.requestAuthorization() else { return }
+        await notificationScheduler.schedule(
+            LocalNotificationRequest(
+                identifier: "pokemon.detail.151",
+                title: CoreStrings.notificationDemoTitle,
+                body: CoreStrings.notificationDemoBody,
+                userInfo: ["pokemon_id": 151]
+            )
         )
-        try? await center.add(request)
     }
 }
 
@@ -285,12 +276,18 @@ private extension ThemePreference {
 #if DEBUG
 import SwiftUI
 
+private struct PreviewNotificationScheduler: LocalNotificationScheduling {
+    func requestAuthorization() async -> Bool { false }
+    func schedule(_ request: LocalNotificationRequest) async {}
+}
+
 #Preview("Pokemon List") {
     UINavigationController(
         rootViewController: PokemonListViewController(
             repository: PreviewPokemonRepository(),
             imageLoader: PreviewImageLoader(),
             themeStore: UserDefaultsThemeStore(),
+            notificationScheduler: PreviewNotificationScheduler(),
             onSelect: { _ in }
         )
     )
