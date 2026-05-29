@@ -14,17 +14,20 @@ public final class PokemonCoordinator: Coordinator {
     private let repository: any PokemonRepository
     private let imageLoader: any ImageLoader
     private let themeStore: any ThemeStore
+    private let notificationScheduler: any LocalNotificationScheduling
 
     public init(
         navigationController: UINavigationController,
         repository: any PokemonRepository,
         imageLoader: any ImageLoader,
-        themeStore: any ThemeStore
+        themeStore: any ThemeStore,
+        notificationScheduler: any LocalNotificationScheduling
     ) {
         self.navigationController = navigationController
         self.repository = repository
         self.imageLoader = imageLoader
         self.themeStore = themeStore
+        self.notificationScheduler = notificationScheduler
     }
 
     public func start() {
@@ -32,6 +35,7 @@ public final class PokemonCoordinator: Coordinator {
             repository: repository,
             imageLoader: imageLoader,
             themeStore: themeStore,
+            notificationScheduler: notificationScheduler,
             onSelect: { [weak self] pokemon in
                 self?.showDetail(for: pokemon)
             }

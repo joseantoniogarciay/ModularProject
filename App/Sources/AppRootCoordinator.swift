@@ -29,7 +29,8 @@ final class AppRootCoordinator: Coordinator {
             navigationController: pokemonNav,
             repository: dependencies.pokemonRepository,
             imageLoader: dependencies.imageLoader,
-            themeStore: dependencies.themeStore
+            themeStore: dependencies.themeStore,
+            notificationScheduler: SystemLocalNotificationScheduler()
         )
         pokemonCoordinator.delegate = self
         pokemonCoordinator.start()
