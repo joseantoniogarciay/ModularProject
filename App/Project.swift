@@ -8,6 +8,7 @@ private func infoPlist(
 ) -> [String: Plist.Value] {
     [
         "CFBundleDisplayName": .string(displayName),
+        "CFBundleLocalizations": .array([.string("en"), .string("es")]),
         "PokeAPIBaseURL": .string(pokeAPIBaseURL),
         "FreeAPIBaseURL": .string(freeAPIBaseURL),
         "UILaunchScreen": [
