@@ -12,6 +12,7 @@ public final class BannerCenter {
 
     public func show(_ payload: BannerPayload) {
         ensureWindow()
+        syncAppearance()
         dismissTask?.cancel()
         dismissTask = nil
 
@@ -106,6 +107,16 @@ public final class BannerCenter {
     private func hideWindowIfIdle() {
         guard currentBanner == nil else { return }
         bannerWindow?.isHidden = true
+    }
+
+    /// Mirrors the app's forced appearance onto the banner's own window.
+    /// The banner lives in a separate `UIWindow`, so a theme override applied to the
+    /// main app window (see `themeButtonTapped`) would otherwise not reach it and the
+    /// banner would follow the system appearance instead.
+    private func syncAppearance() {
+        guard let bannerWindow, let windowScene = activeWindowScene() else { return }
+        let appWindow = windowScene.windows.first { !($0 is BannerWindow) }
+        bannerWindow.overrideUserInterfaceStyle = appWindow?.overrideUserInterfaceStyle ?? .unspecified
     }
 
     private func activeWindowScene() -> UIWindowScene? {
