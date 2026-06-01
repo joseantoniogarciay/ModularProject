@@ -9,7 +9,7 @@ public final class RetryView: UIView {
     public weak var delegate: (any RetryViewDelegate)?
 
     private let messageLabel = UILabel()
-    private let retryButton = UIButton(type: .system)
+    private let retryButton = PrimaryButton()
 
     public override init(frame: CGRect) {
         super.init(frame: frame)
@@ -42,8 +42,6 @@ public final class RetryView: UIView {
         messageLabel.adjustsFontForContentSizeCategory = true
         messageLabel.textColor = SharedUIAsset.secondaryText.color
 
-        retryButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
-        retryButton.titleLabel?.adjustsFontForContentSizeCategory = true
         retryButton.addTarget(self, action: #selector(retryTapped), for: .touchUpInside)
 
         let stack = UIStackView(arrangedSubviews: [messageLabel, retryButton])
