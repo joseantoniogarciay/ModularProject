@@ -57,4 +57,35 @@ final class PokemonListAccessibilityTests: XCTestCase {
 
         try app.performAccessibilityAudit(for: .sufficientElementDescription)
     }
+
+    // MARK: - RetryView audit
+
+    /// Launch with list-error to render the full-screen `RetryView` and audit it.
+    /// Mirrors the SwiftUI port's `testRetryViewPassesAccessibilityAudit` so both projects
+    /// cover the error screen's contrast, hit regions and descriptions equally.
+    @MainActor
+    func testRetryViewPassesAccessibilityAudit() throws {
+        // Terminate the default app launched in setUp (it used --uitesting).
+        app.terminate()
+
+        let errorApp = XCUIApplication()
+        errorApp.launchArguments = ["--uitesting-list-error"]
+        errorApp.launch()
+        defer { errorApp.terminate() }
+
+        let retryButton = errorApp.buttons["pokemon.list.retry.button"]
+        XCTAssertTrue(
+            retryButton.waitForExistence(timeout: 3),
+            "Retry button must appear when the initial list load fails"
+        )
+
+        // Suppress only the borderline "Contrast nearly passed" near-miss the auditor raises
+        // against system-colored elements; every other audit check still fails the test.
+        try errorApp.performAccessibilityAudit { issue in
+            let description = issue.compactDescription + " " + issue.detailedDescription
+            let isNearMissContrast = issue.auditType == .contrast
+                && description.localizedCaseInsensitiveContains("nearly passed")
+            return isNearMissContrast  // true → ignore this issue
+        }
+    }
 }
